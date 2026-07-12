@@ -1,0 +1,1026 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>WC 2026 Office Sweepstake — Live</title>
+<meta name="robots" content="noindex, nofollow" />
+<meta name="referrer" content="no-referrer" />
+<style>
+  :root {
+    --bg: #0b1020; --panel: #131a30; --panel-2: #1a2240;
+    --accent: #d4af37; --accent-2: #f5d76e; --good: #2ecc71;
+    --bad: #e74c3c; --warn: #f39c12; --text: #e8ecf7;
+    --muted: #8a93b0; --border: #283159;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: linear-gradient(160deg, #0b1020 0%, #15203d 55%, #1a1530 100%);
+    color: var(--text); min-height: 100vh;
+  }
+  header {
+    padding: 16px 20px; border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+    flex-wrap: wrap; gap: 10px; background: rgba(0,0,0,0.35);
+    position: sticky; top: 0; z-index: 50; backdrop-filter: blur(8px);
+  }
+  header h1 {
+    margin: 0; font-size: 17px; letter-spacing: 0.3px;
+    background: linear-gradient(90deg, var(--accent-2), var(--accent));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+  }
+  header .sub { color: var(--muted); font-size: 11px; margin-top: 3px; }
+  .badge {
+    display: inline-block; padding: 4px 10px; border-radius: 12px;
+    font-size: 11px; font-weight: 700; background: var(--accent); color: #1a1505;
+  }
+  .badge.live { background: var(--good); color: #062; }
+  .badge.warn { background: var(--warn); color: #1a1000; }
+  .badge.off { background: var(--panel-2); color: var(--muted); border: 1px solid var(--border); }
+  .tabs {
+    display: flex; gap: 4px; flex-wrap: wrap; padding: 12px 16px 0;
+    max-width: 1400px; margin: 0 auto;
+  }
+  .tab {
+    background: transparent; border: 1px solid var(--border); color: var(--muted);
+    padding: 8px 12px; border-radius: 8px 8px 0 0; cursor: pointer;
+    font-size: 12px; font-weight: 600;
+  }
+  .tab.active { background: var(--panel); color: var(--accent-2); border-bottom-color: var(--panel); }
+  .container { max-width: 1400px; margin: 0 auto; padding: 0 16px 28px; }
+  .panel-view { display: none; } .panel-view.active { display: block; }
+  .card {
+    background: var(--panel); border: 1px solid var(--border);
+    border-radius: 12px; padding: 16px; margin-top: 14px;
+  }
+  .card h2 {
+    margin: 0 0 12px 0; font-size: 12px; text-transform: uppercase;
+    letter-spacing: 1.3px; color: var(--accent-2);
+    display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  }
+  .card h2 .count {
+    background: var(--panel-2); color: var(--text); padding: 2px 8px;
+    border-radius: 10px; font-size: 11px; letter-spacing: 0; text-transform: none;
+  }
+  .grid-2 { display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 14px; }
+  @media (max-width: 960px) { .grid-2 { grid-template-columns: 1fr; } }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th, td { padding: 9px 10px; text-align: left; border-bottom: 1px solid var(--border); }
+  th { color: var(--muted); font-weight: 600; font-size: 10px; text-transform: uppercase; letter-spacing: 1px; }
+  tr:hover td { background: rgba(255,255,255,0.02); }
+  .num { text-align: center; font-variant-numeric: tabular-nums; }
+  .pts { font-weight: 700; color: var(--accent-2); text-align: center; }
+  .gd-pos { color: var(--good); } .gd-neg { color: var(--bad); }
+  .rank {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 26px; height: 26px; border-radius: 50%;
+    background: var(--panel-2); color: var(--muted); font-weight: 700; font-size: 12px;
+  }
+  .rank.gold { background: linear-gradient(135deg, #f5d76e, #d4af37); color: #1a1505; }
+  .rank.silver { background: linear-gradient(135deg, #c0c4d0, #8a93b0); color: #0b1020; }
+  .rank.bronze { background: linear-gradient(135deg, #cd7f32, #8b4513); color: #fff; }
+  .stage-tag {
+    display: inline-block; padding: 2px 7px; border-radius: 4px;
+    font-size: 10px; font-weight: 700; letter-spacing: 0.5px;
+    background: var(--panel-2); color: var(--muted);
+  }
+  .stage-tag.GS { color: #8ab4f8; } .stage-tag.R32 { color: #81c995; }
+  .stage-tag.R16 { color: #fdd663; } .stage-tag.QF { color: #f28b82; }
+  .stage-tag.SF { color: #d7aefb; } .stage-tag.F, .stage-tag.\33RD { color: var(--accent-2); }
+  label { display: block; font-size: 11px; color: var(--muted); margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
+  input[type="text"], input[type="number"], input[type="email"], input[type="password"], select {
+    width: 100%; padding: 8px 10px; background: var(--panel-2);
+    border: 1px solid var(--border); border-radius: 7px; color: var(--text); font-size: 13px;
+  }
+  input:focus, select:focus { outline: none; border-color: var(--accent); }
+  button {
+    cursor: pointer; border: none; border-radius: 7px; padding: 8px 12px;
+    font-weight: 600; font-size: 12px;
+  }
+  .btn-primary { background: var(--accent); color: #1a1505; }
+  .btn-primary:hover { background: var(--accent-2); }
+  .btn-secondary { background: var(--panel-2); color: var(--text); border: 1px solid var(--border); }
+  .btn-danger { background: rgba(231,76,60,0.15); color: var(--bad); border: 1px solid rgba(231,76,60,0.3); }
+  .btn-sm { padding: 4px 8px; font-size: 10px; }
+  .btn-primary:disabled, .btn-secondary:disabled { opacity: 0.45; cursor: not-allowed; }
+  .row { display: flex; gap: 8px; align-items: flex-end; flex-wrap: wrap; }
+  .row > * { flex: 1; min-width: 100px; }
+  .match-form { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .match-form .full { grid-column: span 2; }
+  .score-input { display: flex; align-items: center; gap: 8px; }
+  .score-input span { font-weight: 700; color: var(--muted); margin-top: 14px; }
+  .matches-feed { max-height: 520px; overflow-y: auto; }
+  .match-item {
+    display: grid; grid-template-columns: 72px 1fr auto; gap: 10px; align-items: center;
+    padding: 10px 12px; background: var(--panel-2); border: 1px solid var(--border);
+    border-radius: 8px; margin-bottom: 6px; font-size: 13px;
+  }
+  .match-item .meta { text-align: center; border-right: 1px solid var(--border); padding-right: 8px; }
+  .match-item .meta .date { font-size: 10px; color: var(--muted); margin-top: 3px; }
+  .match-item .teams { display: flex; flex-direction: column; gap: 3px; }
+  .match-item .team-row { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+  .match-item .team-row.winner { font-weight: 700; color: var(--good); }
+  .match-item .team-row.loser { color: var(--muted); }
+  .match-item .team-row.draw { color: var(--text); }
+  .match-item .owner { font-size: 10px; color: var(--accent-2); margin-left: 6px; font-weight: 600; }
+  .match-item .pts-earned { font-size: 11px; color: var(--accent-2); font-weight: 700; min-width: 28px; text-align: right; }
+  .match-item .pts-earned.zero { color: var(--muted); font-weight: 400; }
+  .match-item .note { font-size: 10px; color: var(--warn); margin-top: 2px; }
+  .filters { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
+  .filters button.active { background: var(--accent); color: #1a1505; }
+  .roster-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; }
+  .roster-card { background: var(--panel-2); border: 1px solid var(--border); border-radius: 10px; padding: 12px; }
+  .roster-card h3 { margin: 0 0 8px 0; font-size: 15px; display: flex; justify-content: space-between; align-items: center; }
+  .roster-card h3 .tot { color: var(--accent-2); font-size: 18px; }
+  .team-line {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 5px 0; border-bottom: 1px solid rgba(255,255,255,0.04); font-size: 12px;
+  }
+  .team-line:last-child { border-bottom: none; }
+  .team-line .tname { font-weight: 600; }
+  .team-line .tstats { color: var(--muted); font-size: 11px; }
+  .team-line .tpts { font-weight: 700; color: var(--accent-2); min-width: 28px; text-align: right; }
+  .alive { color: var(--good) !important; } .out { opacity: 0.55; }
+  .breakdown-row { cursor: pointer; }
+  .caret { transition: transform 0.15s; display: inline-block; color: var(--muted); font-size: 10px; }
+  .caret.open { transform: rotate(90deg); }
+  .detail-box { background: rgba(0,0,0,0.28); padding: 10px 14px; font-size: 12px; }
+  .detail-line {
+    display: grid; grid-template-columns: 70px 48px 1fr 70px 36px; gap: 8px;
+    padding: 3px 0; color: var(--muted); align-items: center;
+  }
+  .detail-line .ppos { color: var(--good); font-weight: 700; text-align: right; }
+  .detail-line .pzero { color: var(--muted); text-align: right; }
+  .rules-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; }
+  .rule-box { background: var(--panel-2); border: 1px solid var(--border); border-radius: 8px; padding: 12px; }
+  .rule-box h4 { margin: 0 0 8px 0; color: var(--accent-2); font-size: 12px; text-transform: uppercase; letter-spacing: 1px; }
+  .rule-box .line { display: flex; justify-content: space-between; font-size: 13px; padding: 3px 0; }
+  .rule-box .line strong { color: var(--accent-2); }
+  .help { font-size: 11px; color: var(--muted); margin-top: 8px; line-height: 1.55; }
+  .empty { color: var(--muted); font-size: 12px; text-align: center; padding: 18px; font-style: italic; }
+  .toast {
+    position: fixed; top: 18px; right: 18px; background: var(--good); color: white;
+    padding: 10px 16px; border-radius: 8px; box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+    opacity: 0; transform: translateY(-16px); transition: opacity 0.3s, transform 0.3s;
+    z-index: 1000; font-size: 13px; font-weight: 600; max-width: 340px;
+  }
+  .toast.show { opacity: 1; transform: translateY(0); }
+  .toast.err { background: var(--bad); }
+  .sf-banner {
+    background: linear-gradient(90deg, rgba(212,175,55,0.15), rgba(46,204,113,0.1));
+    border: 1px solid rgba(212,175,55,0.35); border-radius: 10px;
+    padding: 12px 14px; margin-top: 14px; font-size: 13px;
+  }
+  .sf-banner strong { color: var(--accent-2); }
+  .podium { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 8px; }
+  @media (max-width: 700px) { .podium { grid-template-columns: 1fr; } }
+  .podium-card {
+    background: var(--panel-2); border: 1px solid var(--border);
+    border-radius: 10px; padding: 14px; text-align: center;
+  }
+  .podium-card.p1 { border-color: #d4af37; box-shadow: 0 0 20px rgba(212,175,55,0.15); }
+  .podium-card.p2 { border-color: #8a93b0; } .podium-card.p3 { border-color: #cd7f32; }
+  .podium-card .place { font-size: 22px; }
+  .podium-card .pname { font-size: 18px; font-weight: 700; margin: 4px 0; }
+  .podium-card .ppts { font-size: 28px; font-weight: 800; color: var(--accent-2); }
+  .podium-card .psub { font-size: 11px; color: var(--muted); }
+  .footer-actions { display: flex; gap: 6px; margin-top: 10px; flex-wrap: wrap; }
+  .admin-box {
+    border: 1px dashed rgba(212,175,55,0.4); border-radius: 10px;
+    padding: 12px; background: rgba(212,175,55,0.05); margin-bottom: 12px;
+  }
+  .admin-box h3 { margin: 0 0 8px 0; font-size: 13px; color: var(--accent-2); }
+  .status-line { font-size: 12px; color: var(--muted); margin: 6px 0; }
+  .status-line strong { color: var(--text); }
+  .setup-banner {
+    background: rgba(243,156,18,0.12); border: 1px solid rgba(243,156,18,0.4);
+    border-radius: 10px; padding: 12px 14px; margin-top: 14px; font-size: 13px;
+  }
+  .locked-note { font-size: 11px; color: var(--muted); margin-top: 8px; }
+  #admin-tab-btn { display: none; }
+  #admin-tab-btn.show { display: inline-block; }
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>🏆 FIFA World Cup 2026 — Office Sweepstake</h1>
+    <div class="sub">Live shared standings · Email scoring · View-only for friends · Admin-only edits</div>
+  </div>
+  <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+    <span class="badge off" id="sync-badge">Connecting…</span>
+    <span class="badge" id="match-badge">0 matches</span>
+    <span class="badge off" id="admin-badge">Viewer</span>
+  </div>
+</header>
+
+<div class="tabs">
+  <button class="tab active" data-tab="standings">🏅 Standings</button>
+  <button class="tab" data-tab="rosters">👥 Rosters</button>
+  <button class="tab" data-tab="matches">⚽ Matches</button>
+  <button class="tab" data-tab="rules">📋 Rules</button>
+  <button class="tab" data-tab="admin" id="admin-tab-btn">🔐 Admin</button>
+</div>
+
+<div class="container">
+  <div id="setup-banner" class="setup-banner" style="display:none"></div>
+
+  <div class="panel-view active" id="view-standings">
+    <div class="sf-banner" id="sf-banner"></div>
+    <div class="card">
+      <h2><span>Podium</span><span class="count" id="cutoff-label">Live</span></h2>
+      <div class="podium" id="podium"></div>
+    </div>
+    <div class="card">
+      <h2><span>Full Standings</span><span class="count">Tiebreak: GF → least GC</span></h2>
+      <table>
+        <thead>
+          <tr>
+            <th>#</th><th>Participant</th>
+            <th class="num">Pts</th><th class="num">GS</th><th class="num">KO</th>
+            <th class="num">GF</th><th class="num">GC</th><th class="num">GD</th>
+            <th>Still live</th>
+          </tr>
+        </thead>
+        <tbody id="standings-body"></tbody>
+      </table>
+    </div>
+    <div class="card">
+      <h2>📊 Expandable Points Breakdown</h2>
+      <table>
+        <thead>
+          <tr>
+            <th style="width:20px"></th><th>Participant</th>
+            <th class="num">Pts</th><th class="num">GS</th><th class="num">R32</th>
+            <th class="num">R16</th><th class="num">QF</th><th class="num">SF+</th>
+            <th class="num">GF/GC</th>
+          </tr>
+        </thead>
+        <tbody id="breakdown-body"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="panel-view" id="view-rosters">
+    <div class="card">
+      <h2><span>Participant Rosters &amp; Team Points</span><span class="count">8 teams each</span></h2>
+      <div class="roster-grid" id="roster-grid"></div>
+    </div>
+  </div>
+
+  <div class="panel-view" id="view-matches">
+    <div class="card">
+      <h2><span>Matches Played</span><span class="count" id="matches-count">0</span></h2>
+      <div class="filters" id="match-filters">
+        <button class="btn-secondary btn-sm active" data-filter="ALL">All</button>
+        <button class="btn-secondary btn-sm" data-filter="GS">Group</button>
+        <button class="btn-secondary btn-sm" data-filter="R32">R32</button>
+        <button class="btn-secondary btn-sm" data-filter="R16">R16</button>
+        <button class="btn-secondary btn-sm" data-filter="QF">QF</button>
+        <button class="btn-secondary btn-sm" data-filter="SF">SF</button>
+        <button class="btn-secondary btn-sm" data-filter="F">Final</button>
+        <button class="btn-secondary btn-sm" data-filter="3RD">3rd</button>
+      </div>
+      <div class="matches-feed" id="matches-feed"></div>
+    </div>
+  </div>
+
+  <div class="panel-view" id="view-rules">
+    <div class="card">
+      <h2>Scoring System (from group email)</h2>
+      <div class="rules-grid">
+        <div class="rule-box">
+          <h4>Group Stage</h4>
+          <div class="line"><span>Win</span><strong>2</strong></div>
+          <div class="line"><span>Draw</span><strong>1</strong></div>
+          <div class="line"><span>Loss</span><strong>0</strong></div>
+        </div>
+        <div class="rule-box">
+          <h4>Knockout Wins</h4>
+          <div class="line"><span>Round of 32</span><strong>4</strong></div>
+          <div class="line"><span>Round of 16</span><strong>6</strong></div>
+          <div class="line"><span>Quarter-final</span><strong>8</strong></div>
+          <div class="line"><span>Semi-final</span><strong>10</strong></div>
+          <div class="line"><span>3rd Place</span><strong>7</strong></div>
+          <div class="line"><span>Final</span><strong>15</strong></div>
+        </div>
+        <div class="rule-box">
+          <h4>Knockout Losses</h4>
+          <div class="line"><span>R32 / R16 / QF</span><strong>0</strong></div>
+          <div class="line"><span>Semi-final</span><strong>5</strong></div>
+          <div class="line"><span>Final</span><strong>8</strong></div>
+        </div>
+        <div class="rule-box">
+          <h4>Extras</h4>
+          <div class="line"><span>Mystic Bonus</span><strong>+10</strong></div>
+          <div class="line"><span>Status</span><strong style="color:var(--bad)">Not submitted</strong></div>
+          <div class="line"><span>Tiebreak 1</span><strong>Most GF</strong></div>
+          <div class="line"><span>Tiebreak 2</span><strong>Least GC</strong></div>
+          <div class="line"><span>Tiebreak 3</span><strong>Coin / RPS</strong></div>
+        </div>
+      </div>
+      <div class="help" style="margin-top:14px">
+        Penalty shootouts: open-play goals (90 + AET) count toward GF/GC; the advancing team still gets knockout win points.<br>
+        This site is unlisted (no search indexing). Only people with your link can open it. Only the admin account can change scores.
+      </div>
+    </div>
+  </div>
+
+  <div class="panel-view" id="view-admin">
+    <div class="grid-2">
+      <div class="card">
+        <h2>Admin login</h2>
+        <div class="admin-box" id="login-box">
+          <h3>Sign in to edit scores</h3>
+          <div class="row">
+            <div><label>Email</label><input type="email" id="admin-email" autocomplete="username" /></div>
+            <div><label>Password</label><input type="password" id="admin-password" autocomplete="current-password" /></div>
+          </div>
+          <div class="footer-actions">
+            <button class="btn-primary" id="btn-login">Sign in</button>
+            <button class="btn-secondary" id="btn-logout" style="display:none">Sign out</button>
+          </div>
+          <div class="status-line" id="login-status">Not signed in — viewers can only look, not edit.</div>
+          <div class="help">Use the same email you put in Firebase Authentication and in firestore.rules (ADMIN_EMAIL).</div>
+        </div>
+
+        <h2 style="margin-top:18px">Record match</h2>
+        <div class="match-form" id="record-form">
+          <div>
+            <label>Stage</label>
+            <select id="m-stage">
+              <option value="GS">Group Stage</option>
+              <option value="R32">Round of 32</option>
+              <option value="R16">Round of 16</option>
+              <option value="QF">Quarter-final</option>
+              <option value="SF" selected>Semi-final</option>
+              <option value="3RD">3rd Place</option>
+              <option value="F">Final</option>
+            </select>
+          </div>
+          <div>
+            <label>Date label</label>
+            <input type="text" id="m-date" placeholder="e.g. Jul 14" value="Jul 14" />
+          </div>
+          <div>
+            <label>Team A</label>
+            <select id="m-team-a"></select>
+          </div>
+          <div>
+            <label>Team B</label>
+            <select id="m-team-b"></select>
+          </div>
+          <div class="full">
+            <div class="score-input">
+              <div style="flex:1">
+                <label>Score A (90 + AET)</label>
+                <input type="number" id="m-score-a" min="0" value="0" />
+              </div>
+              <span>vs</span>
+              <div style="flex:1">
+                <label>Score B (90 + AET)</label>
+                <input type="number" id="m-score-b" min="0" value="0" />
+              </div>
+            </div>
+          </div>
+          <div>
+            <label>Winner (if pens / needed)</label>
+            <select id="m-winner"><option value="">— Auto from score —</option></select>
+          </div>
+          <div>
+            <label>Note</label>
+            <input type="text" id="m-note" placeholder="AET / pens 4-3" />
+          </div>
+          <div class="full">
+            <button class="btn-primary" id="btn-record" style="width:100%" disabled>Record match (live for everyone)</button>
+          </div>
+        </div>
+        <div class="locked-note" id="edit-lock-note">Sign in as admin to unlock editing.</div>
+      </div>
+
+      <div class="card">
+        <h2>Live database</h2>
+        <div class="status-line">Mode: <strong id="db-mode">—</strong></div>
+        <div class="status-line">Matches in cloud: <strong id="db-count">—</strong></div>
+        <div class="status-line">Last update: <strong id="db-updated">—</strong></div>
+        <div class="footer-actions">
+          <button class="btn-primary" id="btn-init-cloud" disabled>Initialize cloud from seed</button>
+          <button class="btn-secondary" id="btn-reload">Force refresh</button>
+        </div>
+        <div class="help">
+          First time only: after Firebase is configured and you are signed in, click
+          <strong>Initialize cloud from seed</strong>. That uploads the 100 verified matches
+          so every visitor shares the same live document.
+        </div>
+        <h2 style="margin-top:18px">Suggested fixtures</h2>
+        <div id="upcoming"></div>
+        <div class="help">Click a fixture to pre-fill the form (admin only can save).</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- Firebase SDK (loads on the real website; needs internet) -->
+<script type="module">
+// ============================================================
+// 1) PASTE YOUR FIREBASE WEB CONFIG BELOW (from Firebase Console)
+// ============================================================
+const FIREBASE_CONFIG = {
+  apiKey: "PASTE_API_KEY",
+  authDomain: "PASTE_PROJECT_ID.firebaseapp.com",
+  projectId: "PASTE_PROJECT_ID",
+  storageBucket: "PASTE_PROJECT_ID.appspot.com",
+  messagingSenderId: "PASTE_SENDER_ID",
+  appId: "PASTE_APP_ID"
+};
+
+// Optional: show Admin tab link even for viewers (they still cannot write)
+const SHOW_ADMIN_TAB_TO_EVERYONE = true;
+
+// ============================================================
+// Seed data (verified through QFs)
+// ============================================================
+const SEED = {"rosters":{"Jabed":["Brazil","Morocco","Japan","Ecuador","Algeria","Paraguay","Uzbekistan","Curaçao"],"Rachel":["Spain","Belgium","Mexico","Austria","Egypt","Scotland","Qatar","Ghana"],"Aminah":["Portugal","Netherlands","Senegal","Iran","Panama","Czechia","South Africa","Haiti"],"Saira":["England","Colombia","Switzerland","Türkiye","Norway","Sweden","Jordan","New Zealand"],"Troy":["France","Germany","USA","Australia","Canada","DR Congo","Saudi Arabia","Bosnia & Herzegovina"],"Rifat":["Argentina","Croatia","Uruguay","South Korea","Côte d'Ivoire","Tunisia","Iraq","Cape Verde"]},"matches":[{"date":"Jun 11","stage":"GS","group":"A","teamA":"Mexico","scoreA":2,"scoreB":0,"teamB":"South Africa","winner":"Mexico","note":""},{"date":"Jun 12","stage":"GS","group":"A","teamA":"South Korea","scoreA":2,"scoreB":1,"teamB":"Czechia","winner":"South Korea","note":""},{"date":"Jun 12","stage":"GS","group":"B","teamA":"Canada","scoreA":1,"scoreB":1,"teamB":"Bosnia & Herzegovina","winner":null,"note":""},{"date":"Jun 13","stage":"GS","group":"B","teamA":"Qatar","scoreA":1,"scoreB":1,"teamB":"Switzerland","winner":null,"note":""},{"date":"Jun 13","stage":"GS","group":"C","teamA":"Brazil","scoreA":1,"scoreB":1,"teamB":"Morocco","winner":null,"note":""},{"date":"Jun 13","stage":"GS","group":"D","teamA":"USA","scoreA":4,"scoreB":1,"teamB":"Paraguay","winner":"USA","note":""},{"date":"Jun 14","stage":"GS","group":"C","teamA":"Haiti","scoreA":0,"scoreB":1,"teamB":"Scotland","winner":"Scotland","note":""},{"date":"Jun 14","stage":"GS","group":"D","teamA":"Australia","scoreA":2,"scoreB":0,"teamB":"Türkiye","winner":"Australia","note":""},{"date":"Jun 14","stage":"GS","group":"E","teamA":"Germany","scoreA":7,"scoreB":1,"teamB":"Curaçao","winner":"Germany","note":""},{"date":"Jun 14","stage":"GS","group":"F","teamA":"Netherlands","scoreA":2,"scoreB":2,"teamB":"Japan","winner":null,"note":""},{"date":"Jun 15","stage":"GS","group":"E","teamA":"Côte d'Ivoire","scoreA":1,"scoreB":0,"teamB":"Ecuador","winner":"Côte d'Ivoire","note":""},{"date":"Jun 15","stage":"GS","group":"F","teamA":"Sweden","scoreA":5,"scoreB":1,"teamB":"Tunisia","winner":"Sweden","note":""},{"date":"Jun 15","stage":"GS","group":"G","teamA":"Belgium","scoreA":1,"scoreB":1,"teamB":"Egypt","winner":null,"note":""},{"date":"Jun 15","stage":"GS","group":"H","teamA":"Spain","scoreA":0,"scoreB":0,"teamB":"Cape Verde","winner":null,"note":""},{"date":"Jun 16","stage":"GS","group":"G","teamA":"Iran","scoreA":2,"scoreB":2,"teamB":"New Zealand","winner":null,"note":""},{"date":"Jun 16","stage":"GS","group":"H","teamA":"Saudi Arabia","scoreA":1,"scoreB":1,"teamB":"Uruguay","winner":null,"note":""},{"date":"Jun 16","stage":"GS","group":"I","teamA":"France","scoreA":3,"scoreB":1,"teamB":"Senegal","winner":"France","note":""},{"date":"Jun 16","stage":"GS","group":"I","teamA":"Iraq","scoreA":1,"scoreB":4,"teamB":"Norway","winner":"Norway","note":""},{"date":"Jun 17","stage":"GS","group":"J","teamA":"Argentina","scoreA":3,"scoreB":0,"teamB":"Algeria","winner":"Argentina","note":""},{"date":"Jun 17","stage":"GS","group":"J","teamA":"Austria","scoreA":3,"scoreB":1,"teamB":"Jordan","winner":"Austria","note":""},{"date":"Jun 17","stage":"GS","group":"K","teamA":"Portugal","scoreA":1,"scoreB":1,"teamB":"DR Congo","winner":null,"note":""},{"date":"Jun 17","stage":"GS","group":"L","teamA":"England","scoreA":4,"scoreB":2,"teamB":"Croatia","winner":"England","note":""},{"date":"Jun 17","stage":"GS","group":"L","teamA":"Ghana","scoreA":1,"scoreB":0,"teamB":"Panama","winner":"Ghana","note":""},{"date":"Jun 18","stage":"GS","group":"K","teamA":"Colombia","scoreA":3,"scoreB":1,"teamB":"Uzbekistan","winner":"Colombia","note":""},{"date":"Jun 18","stage":"GS","group":"A","teamA":"Czechia","scoreA":1,"scoreB":1,"teamB":"South Africa","winner":null,"note":""},{"date":"Jun 18","stage":"GS","group":"B","teamA":"Switzerland","scoreA":4,"scoreB":1,"teamB":"Bosnia & Herzegovina","winner":"Switzerland","note":""},{"date":"Jun 18","stage":"GS","group":"B","teamA":"Canada","scoreA":6,"scoreB":0,"teamB":"Qatar","winner":"Canada","note":""},{"date":"Jun 18","stage":"GS","group":"A","teamA":"Mexico","scoreA":1,"scoreB":0,"teamB":"South Korea","winner":"Mexico","note":""},{"date":"Jun 19","stage":"GS","group":"D","teamA":"USA","scoreA":2,"scoreB":0,"teamB":"Australia","winner":"USA","note":""},{"date":"Jun 19","stage":"GS","group":"C","teamA":"Scotland","scoreA":0,"scoreB":1,"teamB":"Morocco","winner":"Morocco","note":""},{"date":"Jun 19","stage":"GS","group":"C","teamA":"Brazil","scoreA":3,"scoreB":0,"teamB":"Haiti","winner":"Brazil","note":""},{"date":"Jun 20","stage":"GS","group":"D","teamA":"Türkiye","scoreA":0,"scoreB":1,"teamB":"Paraguay","winner":"Paraguay","note":""},{"date":"Jun 20","stage":"GS","group":"F","teamA":"Netherlands","scoreA":5,"scoreB":1,"teamB":"Sweden","winner":"Netherlands","note":""},{"date":"Jun 20","stage":"GS","group":"E","teamA":"Germany","scoreA":2,"scoreB":1,"teamB":"Côte d'Ivoire","winner":"Germany","note":""},{"date":"Jun 20","stage":"GS","group":"E","teamA":"Ecuador","scoreA":0,"scoreB":0,"teamB":"Curaçao","winner":null,"note":""},{"date":"Jun 21","stage":"GS","group":"F","teamA":"Tunisia","scoreA":0,"scoreB":4,"teamB":"Japan","winner":"Japan","note":""},{"date":"Jun 21","stage":"GS","group":"H","teamA":"Spain","scoreA":4,"scoreB":0,"teamB":"Saudi Arabia","winner":"Spain","note":""},{"date":"Jun 21","stage":"GS","group":"G","teamA":"Belgium","scoreA":0,"scoreB":0,"teamB":"Iran","winner":null,"note":""},{"date":"Jun 21","stage":"GS","group":"H","teamA":"Uruguay","scoreA":2,"scoreB":2,"teamB":"Cape Verde","winner":null,"note":""},{"date":"Jun 22","stage":"GS","group":"G","teamA":"New Zealand","scoreA":1,"scoreB":3,"teamB":"Egypt","winner":"Egypt","note":""},{"date":"Jun 22","stage":"GS","group":"J","teamA":"Argentina","scoreA":2,"scoreB":0,"teamB":"Austria","winner":"Argentina","note":""},{"date":"Jun 22","stage":"GS","group":"I","teamA":"France","scoreA":3,"scoreB":0,"teamB":"Iraq","winner":"France","note":""},{"date":"Jun 22","stage":"GS","group":"I","teamA":"Norway","scoreA":3,"scoreB":2,"teamB":"Senegal","winner":"Norway","note":""},{"date":"Jun 22","stage":"GS","group":"J","teamA":"Jordan","scoreA":1,"scoreB":2,"teamB":"Algeria","winner":"Algeria","note":""},{"date":"Jun 23","stage":"GS","group":"K","teamA":"Portugal","scoreA":5,"scoreB":0,"teamB":"Uzbekistan","winner":"Portugal","note":""},{"date":"Jun 23","stage":"GS","group":"L","teamA":"England","scoreA":0,"scoreB":0,"teamB":"Ghana","winner":null,"note":""},{"date":"Jun 23","stage":"GS","group":"L","teamA":"Croatia","scoreA":1,"scoreB":0,"teamB":"Panama","winner":"Croatia","note":""},{"date":"Jun 23","stage":"GS","group":"K","teamA":"Colombia","scoreA":1,"scoreB":0,"teamB":"DR Congo","winner":"Colombia","note":""},{"date":"Jun 24","stage":"GS","group":"B","teamA":"Bosnia & Herzegovina","scoreA":3,"scoreB":1,"teamB":"Qatar","winner":"Bosnia & Herzegovina","note":""},{"date":"Jun 24","stage":"GS","group":"B","teamA":"Switzerland","scoreA":2,"scoreB":1,"teamB":"Canada","winner":"Switzerland","note":""},{"date":"Jun 24","stage":"GS","group":"C","teamA":"Morocco","scoreA":4,"scoreB":2,"teamB":"Haiti","winner":"Morocco","note":""},{"date":"Jun 24","stage":"GS","group":"C","teamA":"Scotland","scoreA":0,"scoreB":3,"teamB":"Brazil","winner":"Brazil","note":""},{"date":"Jun 25","stage":"GS","group":"A","teamA":"South Africa","scoreA":1,"scoreB":0,"teamB":"South Korea","winner":"South Africa","note":""},{"date":"Jun 25","stage":"GS","group":"A","teamA":"Czechia","scoreA":0,"scoreB":3,"teamB":"Mexico","winner":"Mexico","note":""},{"date":"Jun 25","stage":"GS","group":"E","teamA":"Curaçao","scoreA":0,"scoreB":2,"teamB":"Côte d'Ivoire","winner":"Côte d'Ivoire","note":""},{"date":"Jun 25","stage":"GS","group":"E","teamA":"Ecuador","scoreA":2,"scoreB":1,"teamB":"Germany","winner":"Ecuador","note":""},{"date":"Jun 25","stage":"GS","group":"F","teamA":"Japan","scoreA":1,"scoreB":1,"teamB":"Sweden","winner":null,"note":""},{"date":"Jun 25","stage":"GS","group":"F","teamA":"Tunisia","scoreA":1,"scoreB":3,"teamB":"Netherlands","winner":"Netherlands","note":""},{"date":"Jun 25","stage":"GS","group":"D","teamA":"Türkiye","scoreA":3,"scoreB":2,"teamB":"USA","winner":"Türkiye","note":""},{"date":"Jun 25","stage":"GS","group":"D","teamA":"Paraguay","scoreA":0,"scoreB":0,"teamB":"Australia","winner":null,"note":""},{"date":"Jun 26","stage":"GS","group":"I","teamA":"Norway","scoreA":1,"scoreB":4,"teamB":"France","winner":"France","note":""},{"date":"Jun 26","stage":"GS","group":"I","teamA":"Senegal","scoreA":5,"scoreB":0,"teamB":"Iraq","winner":"Senegal","note":""},{"date":"Jun 26","stage":"GS","group":"H","teamA":"Cape Verde","scoreA":0,"scoreB":0,"teamB":"Saudi Arabia","winner":null,"note":""},{"date":"Jun 26","stage":"GS","group":"H","teamA":"Uruguay","scoreA":0,"scoreB":1,"teamB":"Spain","winner":"Spain","note":""},{"date":"Jun 26","stage":"GS","group":"G","teamA":"New Zealand","scoreA":1,"scoreB":5,"teamB":"Belgium","winner":"Belgium","note":""},{"date":"Jun 26","stage":"GS","group":"G","teamA":"Egypt","scoreA":1,"scoreB":1,"teamB":"Iran","winner":null,"note":""},{"date":"Jun 27","stage":"GS","group":"L","teamA":"Panama","scoreA":0,"scoreB":2,"teamB":"England","winner":"England","note":""},{"date":"Jun 27","stage":"GS","group":"L","teamA":"Croatia","scoreA":2,"scoreB":1,"teamB":"Ghana","winner":"Croatia","note":""},{"date":"Jun 27","stage":"GS","group":"K","teamA":"Colombia","scoreA":0,"scoreB":0,"teamB":"Portugal","winner":null,"note":""},{"date":"Jun 27","stage":"GS","group":"K","teamA":"DR Congo","scoreA":3,"scoreB":1,"teamB":"Uzbekistan","winner":"DR Congo","note":""},{"date":"Jun 27","stage":"GS","group":"J","teamA":"Algeria","scoreA":3,"scoreB":3,"teamB":"Austria","winner":null,"note":""},{"date":"Jun 27","stage":"GS","group":"J","teamA":"Jordan","scoreA":1,"scoreB":3,"teamB":"Argentina","winner":"Argentina","note":""},{"date":"Jun 28","stage":"R32","group":"","teamA":"South Africa","scoreA":0,"scoreB":1,"teamB":"Canada","winner":"Canada","note":""},{"date":"Jun 29","stage":"R32","group":"","teamA":"Brazil","scoreA":2,"scoreB":1,"teamB":"Japan","winner":"Brazil","note":""},{"date":"Jun 29","stage":"R32","group":"","teamA":"Germany","scoreA":1,"scoreB":1,"teamB":"Paraguay","winner":"Paraguay","note":"pens 3-4"},{"date":"Jun 29","stage":"R32","group":"","teamA":"Netherlands","scoreA":1,"scoreB":1,"teamB":"Morocco","winner":"Morocco","note":"pens 2-3"},{"date":"Jun 30","stage":"R32","group":"","teamA":"Côte d'Ivoire","scoreA":1,"scoreB":2,"teamB":"Norway","winner":"Norway","note":""},{"date":"Jun 30","stage":"R32","group":"","teamA":"France","scoreA":3,"scoreB":0,"teamB":"Sweden","winner":"France","note":""},{"date":"Jun 30","stage":"R32","group":"","teamA":"Mexico","scoreA":2,"scoreB":0,"teamB":"Ecuador","winner":"Mexico","note":""},{"date":"Jul 01","stage":"R32","group":"","teamA":"England","scoreA":2,"scoreB":1,"teamB":"DR Congo","winner":"England","note":""},{"date":"Jul 01","stage":"R32","group":"","teamA":"Belgium","scoreA":3,"scoreB":2,"teamB":"Senegal","winner":"Belgium","note":"AET"},{"date":"Jul 01","stage":"R32","group":"","teamA":"USA","scoreA":2,"scoreB":0,"teamB":"Bosnia & Herzegovina","winner":"USA","note":""},{"date":"Jul 02","stage":"R32","group":"","teamA":"Spain","scoreA":3,"scoreB":0,"teamB":"Austria","winner":"Spain","note":""},{"date":"Jul 02","stage":"R32","group":"","teamA":"Portugal","scoreA":2,"scoreB":1,"teamB":"Croatia","winner":"Portugal","note":""},{"date":"Jul 02","stage":"R32","group":"","teamA":"Switzerland","scoreA":2,"scoreB":0,"teamB":"Algeria","winner":"Switzerland","note":""},{"date":"Jul 03","stage":"R32","group":"","teamA":"Australia","scoreA":1,"scoreB":1,"teamB":"Egypt","winner":"Egypt","note":"pens 2-4"},{"date":"Jul 03","stage":"R32","group":"","teamA":"Argentina","scoreA":3,"scoreB":2,"teamB":"Cape Verde","winner":"Argentina","note":"AET"},{"date":"Jul 03","stage":"R32","group":"","teamA":"Colombia","scoreA":1,"scoreB":0,"teamB":"Ghana","winner":"Colombia","note":""},{"date":"Jul 04","stage":"R16","group":"","teamA":"Canada","scoreA":0,"scoreB":3,"teamB":"Morocco","winner":"Morocco","note":""},{"date":"Jul 04","stage":"R16","group":"","teamA":"France","scoreA":1,"scoreB":0,"teamB":"Paraguay","winner":"France","note":""},{"date":"Jul 05","stage":"R16","group":"","teamA":"Brazil","scoreA":1,"scoreB":2,"teamB":"Norway","winner":"Norway","note":""},{"date":"Jul 05","stage":"R16","group":"","teamA":"Mexico","scoreA":2,"scoreB":3,"teamB":"England","winner":"England","note":""},{"date":"Jul 06","stage":"R16","group":"","teamA":"Portugal","scoreA":0,"scoreB":1,"teamB":"Spain","winner":"Spain","note":""},{"date":"Jul 06","stage":"R16","group":"","teamA":"USA","scoreA":1,"scoreB":4,"teamB":"Belgium","winner":"Belgium","note":""},{"date":"Jul 07","stage":"R16","group":"","teamA":"Argentina","scoreA":3,"scoreB":2,"teamB":"Egypt","winner":"Argentina","note":""},{"date":"Jul 07","stage":"R16","group":"","teamA":"Switzerland","scoreA":0,"scoreB":0,"teamB":"Colombia","winner":"Switzerland","note":"pens 4-3"},{"date":"Jul 09","stage":"QF","group":"","teamA":"France","scoreA":2,"scoreB":0,"teamB":"Morocco","winner":"France","note":""},{"date":"Jul 10","stage":"QF","group":"","teamA":"Spain","scoreA":2,"scoreB":1,"teamB":"Belgium","winner":"Spain","note":""},{"date":"Jul 11","stage":"QF","group":"","teamA":"Norway","scoreA":1,"scoreB":2,"teamB":"England","winner":"England","note":"AET"},{"date":"Jul 11","stage":"QF","group":"","teamA":"Argentina","scoreA":3,"scoreB":1,"teamB":"Switzerland","winner":"Argentina","note":"AET"}],"standings":[{"name":"Saira","pts":67,"gf":58,"gc":57,"gs":25,"ko":42},{"name":"Rachel","pts":64,"gf":54,"gc":44,"gs":28,"ko":36},{"name":"Troy","pts":54,"gf":61,"gc":42,"gs":28,"ko":26},{"name":"Jabed","pts":42,"gf":41,"gc":54,"gs":24,"ko":18},{"name":"Rifat","pts":39,"gf":40,"gc":53,"gs":21,"ko":18},{"name":"Aminah","pts":22,"gf":38,"gc":42,"gs":18,"ko":4}]};
+
+const DOC_PATH = { col: "wc2026", id: "live" };
+const KO_WIN = { R32: 4, R16: 6, QF: 8, SF: 10, "3RD": 7, F: 15 };
+const KO_LOSS = { SF: 5, F: 8 };
+
+const OWNER = {};
+for (const [name, teams] of Object.entries(SEED.rosters)) {
+  for (const team of teams) OWNER[team] = name;
+}
+const ALL_TEAMS = Object.keys(OWNER).sort((a, b) => a.localeCompare(b));
+
+function isConfigReady() {
+  return FIREBASE_CONFIG.apiKey && !FIREBASE_CONFIG.apiKey.startsWith("PASTE_");
+}
+
+// Local UI state
+let matches = SEED.matches.map((m, i) => ({ ...m, id: "seed_" + i }));
+let cloudReady = false;
+let isAdmin = false;
+let unsub = null;
+let matchFilter = "ALL";
+let expanded = new Set();
+let lastUpdated = null;
+let firebaseApp = null, auth = null, db = null;
+
+// ---------- utils ----------
+function toast(msg, err) {
+  const t = document.getElementById("toast");
+  t.textContent = msg;
+  t.classList.toggle("err", !!err);
+  t.classList.add("show");
+  clearTimeout(window._tt);
+  window._tt = setTimeout(() => t.classList.remove("show"), 2800);
+}
+function esc(s) {
+  return String(s).replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;" }[c]));
+}
+function gdClass(gd) { return gd > 0 ? "gd-pos" : (gd < 0 ? "gd-neg" : ""); }
+function gsPts(gf, ga) { return gf > ga ? 2 : (gf < ga ? 0 : 1); }
+function resolveWinner(m) {
+  if (m.winner) return m.winner;
+  if (m.scoreA > m.scoreB) return m.teamA;
+  if (m.scoreB > m.scoreA) return m.teamB;
+  return null;
+}
+
+// ---------- scoring ----------
+function compute() {
+  const part = {};
+  for (const name of Object.keys(SEED.rosters)) {
+    part[name] = { pts: 0, gf: 0, gc: 0, gs: 0, ko: 0, r32: 0, r16: 0, qf: 0, sfplus: 0, teams: {} };
+    for (const team of SEED.rosters[name]) {
+      part[name].teams[team] = { pts: 0, gf: 0, gc: 0, gs: 0, ko: 0, log: [], alive: true };
+    }
+  }
+  const matchAlloc = [];
+  for (const m of matches) {
+    const stage = m.stage;
+    const a = m.teamA, b = m.teamB, sa = m.scoreA, sb = m.scoreB;
+    let ptsA = 0, ptsB = 0, noteA = "", noteB = "";
+    if (stage === "GS") {
+      ptsA = gsPts(sa, sb); ptsB = gsPts(sb, sa);
+      noteA = sa > sb ? "WIN" : (sa < sb ? "LOSS" : "DRAW");
+      noteB = sb > sa ? "WIN" : (sb < sa ? "LOSS" : "DRAW");
+    } else {
+      const winner = resolveWinner(m);
+      const winPts = KO_WIN[stage] || 0;
+      const lossPts = KO_LOSS[stage] || 0;
+      if (winner) {
+        if (a === winner) { ptsA = winPts; ptsB = lossPts; noteA = "WIN"; noteB = "LOSS"; }
+        else { ptsB = winPts; ptsA = lossPts; noteA = "LOSS"; noteB = "WIN"; }
+        if (m.note) {
+          if (noteA.startsWith("WIN") || noteA.startsWith("LOSS")) noteA += " (" + m.note + ")";
+          if (noteB.startsWith("WIN") || noteB.startsWith("LOSS")) noteB += " (" + m.note + ")";
+        }
+      } else { noteA = noteB = "TBD"; }
+    }
+    matchAlloc.push({ m, ptsA, ptsB, noteA, noteB });
+    for (const [team, gf, ga, pts, note] of [[a, sa, sb, ptsA, noteA], [b, sb, sa, ptsB, noteB]]) {
+      const owner = OWNER[team];
+      if (!owner || !part[owner]) continue;
+      const t = part[owner].teams[team];
+      t.pts += pts; t.gf += gf; t.gc += ga;
+      t.log.push({ date: m.date, stage, opp: team === a ? b : a, gf, ga, pts, note, id: m.id });
+      part[owner].pts += pts; part[owner].gf += gf; part[owner].gc += ga;
+      if (stage === "GS") { t.gs += pts; part[owner].gs += pts; }
+      else {
+        t.ko += pts; part[owner].ko += pts;
+        if (stage === "R32") part[owner].r32 += pts;
+        else if (stage === "R16") part[owner].r16 += pts;
+        else if (stage === "QF") part[owner].qf += pts;
+        else part[owner].sfplus += pts;
+      }
+    }
+  }
+  for (const name of Object.keys(part)) {
+    for (const team of Object.keys(part[name].teams)) {
+      const t = part[name].teams[team];
+      let lostKO = false, wonFinal = false, playedKO = false;
+      for (const e of t.log) {
+        if (e.stage === "GS") continue;
+        playedKO = true;
+        if (e.note.startsWith("LOSS") && e.stage !== "3RD") lostKO = true;
+        if (e.stage === "F" && e.note.startsWith("WIN")) wonFinal = true;
+      }
+      t.alive = playedKO && (!lostKO || wonFinal);
+    }
+  }
+  const standings = Object.keys(part).map(name => ({
+    name, ...part[name], gd: part[name].gf - part[name].gc
+  })).sort((a, b) => b.pts - a.pts || b.gf - a.gf || a.gc - b.gc || a.name.localeCompare(b.name));
+  return { part, standings, matchAlloc };
+}
+
+// ---------- render ----------
+function setBadges() {
+  document.getElementById("match-badge").textContent = matches.length + " matches";
+  const sync = document.getElementById("sync-badge");
+  if (!isConfigReady()) {
+    sync.textContent = "Setup needed";
+    sync.className = "badge warn";
+  } else if (!cloudReady) {
+    sync.textContent = "Local only";
+    sync.className = "badge warn";
+  } else {
+    sync.textContent = "LIVE sync";
+    sync.className = "badge live";
+  }
+  const ab = document.getElementById("admin-badge");
+  if (isAdmin) { ab.textContent = "Admin"; ab.className = "badge live"; }
+  else { ab.textContent = "Viewer"; ab.className = "badge off"; }
+
+  const canEdit = isAdmin && cloudReady;
+  document.getElementById("btn-record").disabled = !canEdit;
+  document.getElementById("btn-init-cloud").disabled = !isAdmin || !isConfigReady();
+  document.getElementById("edit-lock-note").textContent = canEdit
+    ? "Editing unlocked — saves go live for everyone."
+    : (!isConfigReady()
+      ? "Paste Firebase config in index.html first (see SETUP-GUIDE.md)."
+      : (!isAdmin ? "Sign in as admin to unlock editing." : "Initialize cloud data first."));
+  document.getElementById("db-mode").textContent = cloudReady ? "Cloud (Firestore)" : (isConfigReady() ? "Waiting for cloud doc" : "Seed only (not configured)");
+  document.getElementById("db-count").textContent = matches.length;
+  document.getElementById("db-updated").textContent = lastUpdated ? new Date(lastUpdated).toLocaleString() : "—";
+
+  const banner = document.getElementById("setup-banner");
+  if (!isConfigReady()) {
+    banner.style.display = "block";
+    banner.innerHTML = "<strong>Almost ready.</strong> This page still has placeholder Firebase keys. Follow <strong>SETUP-GUIDE.md</strong> (Firebase + GitHub Pages). Until then, everyone only sees the built-in QF results (not shared live edits).";
+  } else if (!cloudReady) {
+    banner.style.display = "block";
+    banner.innerHTML = "<strong>Firebase connected, cloud empty.</strong> Admin: open the Admin tab → Sign in → <strong>Initialize cloud from seed</strong>. After that, all visitors stay in sync.";
+  } else {
+    banner.style.display = "none";
+  }
+
+  if (SHOW_ADMIN_TAB_TO_EVERYONE || isAdmin) {
+    document.getElementById("admin-tab-btn").classList.add("show");
+  }
+}
+
+function renderAll() {
+  const { part, standings, matchAlloc } = compute();
+  setBadges();
+  renderPodium(standings);
+  renderStandings(standings, part);
+  renderBreakdown(standings, part);
+  renderRosters(standings, part);
+  renderMatches(matchAlloc);
+  renderAddForm();
+  renderUpcoming();
+  renderSfBanner(standings, part);
+}
+
+function renderSfBanner(standings, part) {
+  const alive = [];
+  for (const s of standings) {
+    for (const [team, t] of Object.entries(part[s.name].teams)) {
+      if (t.alive) alive.push({ team, owner: s.name });
+    }
+  }
+  const el = document.getElementById("sf-banner");
+  if (!alive.length) {
+    el.innerHTML = "<strong>No teams marked live</strong> — tournament may be complete, or only group data is loaded.";
+    return;
+  }
+  el.innerHTML = "<strong>Still live:</strong> " + alive.map(a =>
+    esc(a.team) + " <span style=\"color:var(--muted)\">(" + esc(a.owner) + ")</span>"
+  ).join(" · ") +
+  "<div style=\"margin-top:6px;font-size:11px;color:var(--muted)\">SF win +10 / loss +5 · 3rd +7 · Final win +15 / loss +8</div>";
+}
+
+function renderPodium(standings) {
+  const medals = ["🥇","🥈","🥉"], classes = ["p1","p2","p3"];
+  document.getElementById("podium").innerHTML = standings.slice(0, 3).map((s, i) => `
+    <div class="podium-card ${classes[i]}">
+      <div class="place">${medals[i]}</div>
+      <div class="pname">${esc(s.name)}</div>
+      <div class="ppts">${s.pts}</div>
+      <div class="psub">GS ${s.gs} · KO ${s.ko} · GF ${s.gf} / GC ${s.gc} · GD ${s.gd >= 0 ? "+" : ""}${s.gd}</div>
+    </div>`).join("");
+}
+
+function renderStandings(standings, part) {
+  document.getElementById("standings-body").innerHTML = standings.map((s, i) => {
+    const rankCls = i === 0 ? "gold" : i === 1 ? "silver" : i === 2 ? "bronze" : "";
+    const live = Object.entries(part[s.name].teams).filter(([, t]) => t.alive).map(([team]) => team);
+    return `<tr>
+      <td><span class="rank ${rankCls}">${i+1}</span></td>
+      <td><strong>${esc(s.name)}</strong></td>
+      <td class="pts">${s.pts}</td>
+      <td class="num">${s.gs}</td><td class="num">${s.ko}</td>
+      <td class="num">${s.gf}</td><td class="num">${s.gc}</td>
+      <td class="num ${gdClass(s.gd)}">${s.gd >= 0 ? "+" : ""}${s.gd}</td>
+      <td style="font-size:12px;color:var(--good)">${live.length ? live.map(esc).join(", ") : "<span style='color:var(--muted)'>—</span>"}</td>
+    </tr>`;
+  }).join("");
+}
+
+function renderBreakdown(standings, part) {
+  const body = document.getElementById("breakdown-body");
+  body.innerHTML = standings.map(s => {
+    const isOpen = expanded.has(s.name);
+    let detail = "";
+    if (isOpen) {
+      const lines = [];
+      for (const team of SEED.rosters[s.name]) {
+        for (const e of part[s.name].teams[team].log) {
+          lines.push(`<div class="detail-line">
+            <span>${esc(e.date)}</span>
+            <span class="stage-tag ${esc(e.stage)}">${esc(e.stage)}</span>
+            <span><strong>${esc(team)}</strong> vs ${esc(e.opp)} <span style="color:var(--muted)">(${e.gf}-${e.ga} ${esc(e.note)})</span></span>
+            <span style="color:var(--muted);text-align:right">${esc(e.note.split(" ")[0])}</span>
+            <span class="${e.pts > 0 ? "ppos" : "pzero"}">${e.pts > 0 ? "+" + e.pts : "0"}</span>
+          </div>`);
+        }
+      }
+      detail = `<tr><td colspan="9" class="detail-box">${lines.join("") || "<em>No matches</em>"}</td></tr>`;
+    }
+    return `<tr class="breakdown-row" data-name="${esc(s.name)}">
+      <td><span class="caret ${isOpen ? "open" : ""}">▶</span></td>
+      <td><strong>${esc(s.name)}</strong></td>
+      <td class="pts">${s.pts}</td>
+      <td class="num">${s.gs}</td>
+      <td class="num">${s.r32 || "·"}</td>
+      <td class="num">${s.r16 || "·"}</td>
+      <td class="num">${s.qf || "·"}</td>
+      <td class="num">${s.sfplus || "·"}</td>
+      <td class="num">${s.gf}/${s.gc}</td>
+    </tr>${detail}`;
+  }).join("");
+  body.querySelectorAll("tr.breakdown-row").forEach(tr => {
+    tr.onclick = () => {
+      const name = tr.dataset.name;
+      if (expanded.has(name)) expanded.delete(name); else expanded.add(name);
+      renderBreakdown(standings, part);
+    };
+  });
+}
+
+function renderRosters(standings, part) {
+  document.getElementById("roster-grid").innerHTML = standings.map(s => {
+    const teams = SEED.rosters[s.name].map(team => {
+      const t = part[s.name].teams[team];
+      const path = t.log.filter(e => e.stage !== "GS" && e.pts > 0).map(e => e.stage).join("+");
+      return `<div class="team-line ${t.alive ? "alive" : "out"}">
+        <div>
+          <div class="tname">${t.alive ? "🟢" : "⚫"} ${esc(team)}</div>
+          <div class="tstats">GS ${t.gs} · KO ${t.ko}${path ? " · " + path : ""} · ${t.gf}/${t.gc}</div>
+        </div>
+        <div class="tpts">${t.pts}</div>
+      </div>`;
+    }).join("");
+    return `<div class="roster-card"><h3><span>${esc(s.name)}</span><span class="tot">${s.pts}</span></h3>${teams}</div>`;
+  }).join("");
+}
+
+function renderMatches(matchAlloc) {
+  const feed = document.getElementById("matches-feed");
+  document.getElementById("matches-count").textContent = matchAlloc.length;
+  let items = matchAlloc.slice();
+  if (matchFilter !== "ALL") items = items.filter(x => x.m.stage === matchFilter);
+  items = items.slice().reverse();
+  if (!items.length) { feed.innerHTML = '<div class="empty">No matches for this filter</div>'; return; }
+  feed.innerHTML = items.map(({ m, ptsA, ptsB }) => {
+    const winner = resolveWinner(m);
+    const draw = !winner && m.stage === "GS" && m.scoreA === m.scoreB;
+    const aCls = draw ? "draw" : (winner === m.teamA ? "winner" : (winner ? "loser" : "draw"));
+    const bCls = draw ? "draw" : (winner === m.teamB ? "winner" : (winner ? "loser" : "draw"));
+    const canDelete = isAdmin && cloudReady && String(m.id).startsWith("extra_");
+    const delBtn = canDelete ? `<button class="btn-danger btn-sm" data-del="${esc(m.id)}">✕</button>` : "";
+    return `<div class="match-item">
+      <div class="meta">
+        <span class="stage-tag ${esc(m.stage)}">${esc(m.stage)}</span>
+        <div class="date">${esc(m.date)}${m.group ? " · " + esc(m.group) : ""}</div>
+      </div>
+      <div class="teams">
+        <div class="team-row ${aCls}">
+          <span>${esc(m.teamA)}<span class="owner">${esc(OWNER[m.teamA] || "?")}</span></span>
+          <span><strong>${m.scoreA}</strong> <span class="pts-earned ${ptsA ? "" : "zero"}">${ptsA ? "+" + ptsA : "0"}</span></span>
+        </div>
+        <div class="team-row ${bCls}">
+          <span>${esc(m.teamB)}<span class="owner">${esc(OWNER[m.teamB] || "?")}</span></span>
+          <span><strong>${m.scoreB}</strong> <span class="pts-earned ${ptsB ? "" : "zero"}">${ptsB ? "+" + ptsB : "0"}</span></span>
+        </div>
+        ${m.note ? `<div class="note">${esc(m.note)}</div>` : ""}
+      </div>
+      <div>${delBtn}</div>
+    </div>`;
+  }).join("");
+  feed.querySelectorAll("button[data-del]").forEach(b => {
+    b.onclick = async () => {
+      if (!confirm("Delete this match for everyone?")) return;
+      const next = matches.filter(m => m.id !== b.dataset.del);
+      try {
+        await saveMatches(next);
+        toast("Match deleted for everyone");
+      } catch (e) { toast(e.message || "Delete failed", true); }
+    };
+  });
+}
+
+function renderAddForm() {
+  const aSel = document.getElementById("m-team-a");
+  const bSel = document.getElementById("m-team-b");
+  const curA = aSel.value, curB = bSel.value, curW = document.getElementById("m-winner").value;
+  const opts = ALL_TEAMS.map(t => `<option value="${esc(t)}">${esc(t)} (${esc(OWNER[t])})</option>`).join("");
+  aSel.innerHTML = '<option value="">— Team A —</option>' + opts;
+  bSel.innerHTML = '<option value="">— Team B —</option>' + opts;
+  if (curA) aSel.value = curA;
+  if (curB) bSel.value = curB;
+  updateWinnerOptions();
+  if (curW) document.getElementById("m-winner").value = curW;
+}
+
+function updateWinnerOptions() {
+  const a = document.getElementById("m-team-a").value;
+  const b = document.getElementById("m-team-b").value;
+  const wSel = document.getElementById("m-winner");
+  const cur = wSel.value;
+  wSel.innerHTML = '<option value="">— Auto from score —</option>';
+  if (a) wSel.innerHTML += `<option value="${esc(a)}">${esc(a)} wins</option>`;
+  if (b) wSel.innerHTML += `<option value="${esc(b)}">${esc(b)} wins</option>`;
+  if (cur && (cur === a || cur === b)) wSel.value = cur;
+}
+
+function renderUpcoming() {
+  const el = document.getElementById("upcoming");
+  const played = new Set(
+    matches.filter(m => m.stage === "SF" || m.stage === "F" || m.stage === "3RD")
+      .map(m => [m.teamA, m.teamB].sort().join("|") + "|" + m.stage)
+  );
+  const suggestions = [];
+  for (const p of [
+    { stage: "SF", date: "Jul 14", a: "France", b: "Spain" },
+    { stage: "SF", date: "Jul 15", a: "England", b: "Argentina" },
+  ]) {
+    const key = [p.a, p.b].sort().join("|") + "|" + p.stage;
+    if (!played.has(key)) suggestions.push(p);
+  }
+  const sfDone = matches.filter(m => m.stage === "SF" && resolveWinner(m));
+  if (sfDone.length === 2) {
+    const W = [], L = [];
+    for (const m of sfDone) {
+      const w = resolveWinner(m);
+      W.push(w); L.push(m.teamA === w ? m.teamB : m.teamA);
+    }
+    const fKey = W.slice().sort().join("|") + "|F";
+    const tKey = L.slice().sort().join("|") + "|3RD";
+    if (!played.has(tKey)) suggestions.push({ stage: "3RD", date: "Jul 18", a: L[0], b: L[1] });
+    if (!played.has(fKey)) suggestions.push({ stage: "F", date: "Jul 19", a: W[0], b: W[1] });
+  }
+  if (!suggestions.length) {
+    el.innerHTML = '<div class="empty">No pending suggested fixtures.</div>';
+    return;
+  }
+  el.innerHTML = suggestions.map((s, i) => `
+    <div class="match-item" style="cursor:pointer;margin-bottom:8px" data-sug="${i}">
+      <div class="meta"><span class="stage-tag ${esc(s.stage)}">${esc(s.stage)}</span><div class="date">${esc(s.date)}</div></div>
+      <div class="teams">
+        <div class="team-row draw"><span>${esc(s.a)} <span class="owner">${esc(OWNER[s.a])}</span></span><span>—</span></div>
+        <div class="team-row draw"><span>${esc(s.b)} <span class="owner">${esc(OWNER[s.b])}</span></span><span>—</span></div>
+      </div>
+      <div style="font-size:11px;color:var(--accent-2)">Fill →</div>
+    </div>`).join("");
+  el.querySelectorAll("[data-sug]").forEach(node => {
+    node.onclick = () => {
+      const s = suggestions[parseInt(node.dataset.sug, 10)];
+      document.getElementById("m-stage").value = s.stage;
+      document.getElementById("m-date").value = s.date;
+      document.getElementById("m-team-a").value = s.a;
+      document.getElementById("m-team-b").value = s.b;
+      updateWinnerOptions();
+      document.querySelector('.tab[data-tab="admin"]').click();
+      toast("Fixture loaded — enter the score");
+    };
+  });
+}
+
+// ---------- Firebase ----------
+async function initFirebase() {
+  if (!isConfigReady()) {
+    renderAll();
+    return;
+  }
+  try {
+    const { initializeApp } = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js");
+    const { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut } =
+      await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js");
+    const { getFirestore, doc, getDoc, setDoc, onSnapshot, serverTimestamp } =
+      await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js");
+
+    firebaseApp = initializeApp(FIREBASE_CONFIG);
+    auth = getAuth(firebaseApp);
+    db = getFirestore(firebaseApp);
+
+    window.__fb = { signInWithEmailAndPassword, signOut, doc, getDoc, setDoc, onSnapshot, serverTimestamp };
+
+    onAuthStateChanged(auth, (user) => {
+      isAdmin = !!(user && user.email);
+      document.getElementById("btn-logout").style.display = user ? "inline-block" : "none";
+      document.getElementById("btn-login").style.display = user ? "none" : "inline-block";
+      document.getElementById("login-status").innerHTML = user
+        ? `Signed in as <strong>${esc(user.email)}</strong>`
+        : "Not signed in — viewers can only look, not edit.";
+      setBadges();
+      renderAll();
+    });
+
+    const ref = doc(db, DOC_PATH.col, DOC_PATH.id);
+    unsub = onSnapshot(ref, (snap) => {
+      if (snap.exists()) {
+        const data = snap.data();
+        if (Array.isArray(data.matches) && data.matches.length) {
+          matches = data.matches;
+          cloudReady = true;
+          lastUpdated = data.updatedAt?.toDate?.()?.toISOString?.() || data.updatedAtClient || null;
+        }
+      } else {
+        cloudReady = false;
+        matches = SEED.matches.map((m, i) => ({ ...m, id: "seed_" + i }));
+      }
+      renderAll();
+    }, (err) => {
+      console.error(err);
+      toast("Live sync error: " + err.message, true);
+      document.getElementById("sync-badge").textContent = "Sync error";
+      document.getElementById("sync-badge").className = "badge warn";
+    });
+  } catch (e) {
+    console.error(e);
+    toast("Firebase failed to load: " + e.message, true);
+    renderAll();
+  }
+}
+
+async function saveMatches(nextMatches) {
+  if (!db || !window.__fb) throw new Error("Firebase not ready");
+  if (!auth.currentUser) throw new Error("Admin sign-in required");
+  const { doc, setDoc, serverTimestamp } = window.__fb;
+  const ref = doc(db, DOC_PATH.col, DOC_PATH.id);
+  const payload = {
+    matches: nextMatches,
+    updatedAt: serverTimestamp(),
+    updatedAtClient: new Date().toISOString(),
+    updatedBy: auth.currentUser.email || "admin"
+  };
+  await setDoc(ref, payload, { merge: true });
+  // onSnapshot will refresh UI
+}
+
+async function initCloudFromSeed() {
+  if (!auth?.currentUser) { toast("Sign in first", true); return; }
+  if (!confirm("Upload the full seed (100 matches) to the cloud? This becomes the shared live data for everyone.")) return;
+  try {
+    const seeded = SEED.matches.map((m, i) => ({
+      id: m.id || ("seed_" + i),
+      date: m.date, stage: m.stage, group: m.group || "",
+      teamA: m.teamA, scoreA: m.scoreA, scoreB: m.scoreB, teamB: m.teamB,
+      winner: m.winner, note: m.note || ""
+    }));
+    await saveMatches(seeded);
+    toast("Cloud initialized — everyone is now live");
+  } catch (e) {
+    toast(e.message || "Init failed", true);
+  }
+}
+
+async function recordMatch() {
+  if (!isAdmin || !cloudReady) { toast("Admin + cloud required", true); return; }
+  const stage = document.getElementById("m-stage").value;
+  const date = document.getElementById("m-date").value.trim() || "TBD";
+  const teamA = document.getElementById("m-team-a").value;
+  const teamB = document.getElementById("m-team-b").value;
+  const scoreA = parseInt(document.getElementById("m-score-a").value, 10);
+  const scoreB = parseInt(document.getElementById("m-score-b").value, 10);
+  let winner = document.getElementById("m-winner").value || null;
+  const note = document.getElementById("m-note").value.trim();
+
+  if (!teamA || !teamB) { toast("Pick two teams", true); return; }
+  if (teamA === teamB) { toast("Teams must differ", true); return; }
+  if (Number.isNaN(scoreA) || Number.isNaN(scoreB) || scoreA < 0 || scoreB < 0) {
+    toast("Invalid scores", true); return;
+  }
+  if (stage !== "GS") {
+    if (!winner) {
+      if (scoreA === scoreB) { toast("KO draw needs a Winner (pens)", true); return; }
+      winner = scoreA > scoreB ? teamA : teamB;
+    }
+  } else {
+    winner = scoreA === scoreB ? null : (scoreA > scoreB ? teamA : teamB);
+  }
+
+  const m = {
+    id: "extra_" + Date.now() + "_" + Math.random().toString(36).slice(2, 7),
+    date, stage, group: "",
+    teamA, scoreA, scoreB, teamB,
+    winner, note
+  };
+  try {
+    await saveMatches(matches.concat([m]));
+    toast(`Live: ${teamA} ${scoreA}-${scoreB} ${teamB}`);
+    document.getElementById("m-score-a").value = 0;
+    document.getElementById("m-score-b").value = 0;
+    document.getElementById("m-note").value = "";
+    document.getElementById("m-winner").value = "";
+  } catch (e) {
+    toast(e.message || "Save failed", true);
+  }
+}
+
+// ---------- wire UI ----------
+document.querySelectorAll(".tab").forEach(tab => {
+  tab.onclick = () => {
+    document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+    document.querySelectorAll(".panel-view").forEach(v => v.classList.remove("active"));
+    tab.classList.add("active");
+    document.getElementById("view-" + tab.dataset.tab).classList.add("active");
+  };
+});
+document.getElementById("match-filters").onclick = (e) => {
+  const btn = e.target.closest("button[data-filter]");
+  if (!btn) return;
+  matchFilter = btn.dataset.filter;
+  document.querySelectorAll("#match-filters button").forEach(b => b.classList.toggle("active", b === btn));
+  renderAll();
+};
+document.getElementById("m-team-a").onchange = updateWinnerOptions;
+document.getElementById("m-team-b").onchange = updateWinnerOptions;
+document.getElementById("btn-record").onclick = recordMatch;
+document.getElementById("btn-init-cloud").onclick = initCloudFromSeed;
+document.getElementById("btn-reload").onclick = () => { renderAll(); toast("Refreshed"); };
+
+document.getElementById("btn-login").onclick = async () => {
+  if (!window.__fb || !auth) { toast("Firebase not configured yet", true); return; }
+  const email = document.getElementById("admin-email").value.trim();
+  const password = document.getElementById("admin-password").value;
+  if (!email || !password) { toast("Enter email and password", true); return; }
+  try {
+    await window.__fb.signInWithEmailAndPassword(auth, email, password);
+    toast("Signed in");
+    document.getElementById("admin-password").value = "";
+  } catch (e) {
+    toast(e.message || "Login failed", true);
+  }
+};
+document.getElementById("btn-logout").onclick = async () => {
+  if (!window.__fb || !auth) return;
+  await window.__fb.signOut(auth);
+  toast("Signed out");
+};
+
+// Boot
+if (SHOW_ADMIN_TAB_TO_EVERYONE) document.getElementById("admin-tab-btn").classList.add("show");
+renderAll();
+initFirebase();
+</script>
+<script defer src="https://static.cloudflareinsights.com/beacon.min.js/v4513226cdae34746b4dedf0b4dfa099e1781791509496" integrity="sha512-ZE9pZaUXND66v380QUtch/5sE9tPFh2zg45pR2PB0CVkCtOREv2AJKkSidISWkysEuQ0EH8faUU5du78bx87UQ==" data-cf-beacon='{"version":"2024.11.0","token":"1954b47c125f43f8b4338b3c4f804e4f","server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a1a14a2ccdbedd0d',t:'MTc4Mzg3MjMyOQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
