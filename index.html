@@ -244,6 +244,7 @@
             <th>#</th><th>Participant</th>
             <th class="num">Pts</th><th class="num">GS</th><th class="num">KO</th>
             <th class="num">GF</th><th class="num">GC</th><th class="num">GD</th>
+            <th>Mystic</th>
             <th>Still live</th>
           </tr>
         </thead>
@@ -608,7 +609,10 @@ function compute() {
   // Mystic Bonus: +N if pick equals World Cup champion (Final winner)
   const champion = findChampion();
   for (const name of Object.keys(part)) {
-    const pick = mystic.picks?.[name] || null;
+    let pick = mystic.picks ? mystic.picks[name] : null;
+    if (pick === "" || pick === undefined) pick = null;
+    // ignore picks that are not real roster teams
+    if (pick && !OWNER[pick]) pick = null;
     part[name].mysticPick = pick;
     part[name].mysticPts = 0;
     part[name].mysticHit = false;
@@ -885,8 +889,20 @@ function renderPodium(standings) {
 function renderStandings(standings, part) {
   document.getElementById("standings-body").innerHTML = standings.map((s, i) => {
     const rankCls = i === 0 ? "gold" : i === 1 ? "silver" : i === 2 ? "bronze" : "";
-    const live = Object.entries(part[s.name].teams).filter(([, t]) => t.alive).map(([team]) => team);
-    const myst = s.mysticHit ? `+${s.mysticPts}` : (s.mysticPick ? esc(s.mysticPick) : "—");
+    const live = Object.entries(part[s.name].teams)
+      .filter(([, t]) => t.alive)
+      .map(([team]) => team);
+    let mystHtml;
+    if (s.mysticHit) {
+      mystHtml = `<span class="mystic-pill yes">+${s.mysticPts} ${esc(s.mysticPick || "")}</span>`;
+    } else if (s.mysticPick) {
+      mystHtml = `<span class="mystic-pill wait">${esc(s.mysticPick)}</span>`;
+    } else {
+      mystHtml = `<span style="color:var(--muted)">—</span>`;
+    }
+    const liveHtml = live.length
+      ? live.map(t => `<span style="color:var(--good);font-weight:600">${esc(t)}</span>`).join(", ")
+      : `<span style="color:var(--muted)">—</span>`;
     return `<tr>
       <td><span class="rank ${rankCls}">${i+1}</span></td>
       <td><strong>${esc(s.name)}</strong></td>
@@ -894,8 +910,8 @@ function renderStandings(standings, part) {
       <td class="num">${s.gs}</td><td class="num">${s.ko}</td>
       <td class="num">${s.gf}</td><td class="num">${s.gc}</td>
       <td class="num ${gdClass(s.gd)}">${s.gd >= 0 ? "+" : ""}${s.gd}</td>
-      <td class="num" style="font-size:11px">${myst}</td>
-      <td style="font-size:12px;color:var(--good)">${live.length ? live.map(esc).join(", ") : "<span style='color:var(--muted)'>—</span>"}</td>
+      <td style="font-size:11px;white-space:nowrap">${mystHtml}</td>
+      <td style="font-size:12px;white-space:nowrap">${liveHtml}</td>
     </tr>`;
   }).join("");
 }
@@ -1404,9 +1420,13 @@ async function initFirebase() {
         }
         if (data.mystic && typeof data.mystic === "object") {
           const base = defaultMystic();
-          mystic = {
-            picks: { ...base.picks, ...(data.mystic.picks || {}) }
-          };
+          const incoming = data.mystic.picks || {};
+          const picks = { ...base.picks };
+          for (const name of Object.keys(base.picks)) {
+            const v = incoming[name];
+            picks[name] = (v && OWNER[v]) ? v : null;
+          }
+          mystic = { picks };
         }
       } else {
         cloudReady = false;
@@ -1566,5 +1586,5 @@ if (SHOW_ADMIN_TAB_TO_EVERYONE) document.getElementById("admin-tab-btn").classLi
 renderAll();
 initFirebase();
 </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a1a1be5dff62d4ed',t:'MTc4Mzg3NzA4OA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a1a1ec4a480aa6d0',t:'MTc4Mzg3ODk2OQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
