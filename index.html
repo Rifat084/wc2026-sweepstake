@@ -407,12 +407,16 @@
         <div class="status-line">Last update: <strong id="db-updated">—</strong></div>
         <div class="footer-actions">
           <button class="btn-primary" id="btn-init-cloud" disabled>Initialize cloud from seed</button>
+          <button class="btn-primary" id="btn-sync-live" disabled>🔄 Sync live scores</button>
+          <button class="btn-secondary" id="btn-auto-sync" disabled>Auto-sync: OFF</button>
           <button class="btn-secondary" id="btn-reload">Force refresh</button>
         </div>
+        <div class="status-line">Live feed: <strong id="live-feed-status">Idle</strong></div>
         <div class="help">
-          First time only: after Firebase is configured and you are signed in, click
-          <strong>Initialize cloud from seed</strong>. That uploads the 100 verified matches
-          so every visitor shares the same live document.
+          First time: sign in → <strong>Initialize cloud from seed</strong>.<br>
+          Then use <strong>Sync live scores</strong> to pull finished World Cup results from the free public feed
+          (<code>worldcup26.ir</code>) and update points for everyone. Optional <strong>Auto-sync</strong> polls every 3 minutes while you stay signed in as admin.<br>
+          You can still enter a match manually if the feed is late or wrong.
         </div>
         <h2 style="margin-top:18px">Suggested fixtures</h2>
         <div id="upcoming"></div>
@@ -580,6 +584,11 @@ function setBadges() {
   const canEdit = isAdmin && cloudReady;
   document.getElementById("btn-record").disabled = !canEdit;
   document.getElementById("btn-init-cloud").disabled = !isAdmin || !isConfigReady();
+  const syncBtn = document.getElementById("btn-sync-live");
+  const autoBtn = document.getElementById("btn-auto-sync");
+  if (syncBtn) syncBtn.disabled = !canEdit;
+  if (autoBtn) autoBtn.disabled = !canEdit;
+  if (!isAdmin && autoSyncOn) setAutoSync(false);
   document.getElementById("edit-lock-note").textContent = canEdit
     ? "Editing unlocked — saves go live for everyone."
     : (!isConfigReady()
@@ -843,6 +852,286 @@ function renderUpcoming() {
   });
 }
 
+
+// ---------- Live score feed (public WC 2026 API) ----------
+// Source: https://worldcup26.ir/get/games (free, no key, CORS *)
+// Admin-only write to Firestore after sync.
+const LIVE_FEED_URL = "https://worldcup26.ir/get/games";
+const AUTO_SYNC_MS = 3 * 60 * 1000; // 3 minutes
+
+const TEAM_ALIAS = {
+  "United States": "USA",
+  "USA": "USA",
+  "USMNT": "USA",
+  "Bosnia and Herzegovina": "Bosnia & Herzegovina",
+  "Bosnia & Herzegovina": "Bosnia & Herzegovina",
+  "Czech Republic": "Czechia",
+  "Czechia": "Czechia",
+  "Democratic Republic of the Congo": "DR Congo",
+  "DR Congo": "DR Congo",
+  "Congo DR": "DR Congo",
+  "Ivory Coast": "Côte d'Ivoire",
+  "Cote d'Ivoire": "Côte d'Ivoire",
+  "Côte d'Ivoire": "Côte d'Ivoire",
+  "Turkey": "Türkiye",
+  "Turkiye": "Türkiye",
+  "Türkiye": "Türkiye",
+  "South Korea": "South Korea",
+  "Korea Republic": "South Korea",
+  "Cape Verde": "Cape Verde",
+  "Cabo Verde": "Cape Verde",
+  "Curaçao": "Curaçao",
+  "Curacao": "Curaçao",
+  "Iran": "Iran",
+  "IR Iran": "Iran"
+};
+
+const STAGE_MAP = {
+  group: "GS",
+  r32: "R32",
+  r16: "R16",
+  qf: "QF",
+  sf: "SF",
+  third: "3RD",
+  final: "F"
+};
+
+let autoSyncOn = false;
+let autoSyncTimer = null;
+let lastSyncAt = null;
+let lastSyncSummary = "";
+
+function normTeam(name) {
+  if (!name || name === "None" || name === "null") return null;
+  const t = String(name).trim();
+  if (TEAM_ALIAS[t]) return TEAM_ALIAS[t];
+  // case-insensitive alias
+  const lower = t.toLowerCase();
+  for (const [k, v] of Object.entries(TEAM_ALIAS)) {
+    if (k.toLowerCase() === lower) return v;
+  }
+  // direct roster match
+  if (OWNER[t]) return t;
+  for (const rosterName of Object.keys(OWNER)) {
+    if (rosterName.toLowerCase() === lower) return rosterName;
+  }
+  return t; // best effort
+}
+
+function formatDateLabel(localDate) {
+  // "07/14/2026 14:00" or "06/11/2026 13:00"
+  if (!localDate) return "TBD";
+  const m = String(localDate).match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+  if (!m) return String(localDate).slice(0, 12);
+  const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+  const month = months[parseInt(m[1], 10) - 1] || m[1];
+  const day = String(parseInt(m[2], 10));
+  return month + " " + day;
+}
+
+function isFinishedGame(g) {
+  const fin = String(g.finished || "").toUpperCase();
+  const te = String(g.time_elapsed || "").toLowerCase();
+  return fin === "TRUE" || te === "finished" || te === "ft" || te === "aet" || te === "pen";
+}
+
+function mapFeedGame(g) {
+  const type = String(g.type || "").toLowerCase();
+  const stage = STAGE_MAP[type];
+  if (!stage) return null;
+
+  const teamA = normTeam(g.home_team_name_en || g.home_team_label);
+  const teamB = normTeam(g.away_team_name_en || g.away_team_label);
+  if (!teamA || !teamB || !OWNER[teamA] || !OWNER[teamB]) {
+    // skip placeholders (Winner Group X) and unknown teams
+    return null;
+  }
+  if (!isFinishedGame(g)) return null;
+
+  const scoreA = parseInt(g.home_score, 10);
+  const scoreB = parseInt(g.away_score, 10);
+  if (Number.isNaN(scoreA) || Number.isNaN(scoreB)) return null;
+
+  let winner = null;
+  let note = "";
+  const penA = g.home_penalty_score != null && g.home_penalty_score !== "" ? parseInt(g.home_penalty_score, 10) : null;
+  const penB = g.away_penalty_score != null && g.away_penalty_score !== "" ? parseInt(g.away_penalty_score, 10) : null;
+
+  if (penA != null && penB != null && !Number.isNaN(penA) && !Number.isNaN(penB) && scoreA === scoreB) {
+    winner = penA > penB ? teamA : (penB > penA ? teamB : null);
+    note = "pens " + penA + "-" + penB;
+  } else if (scoreA !== scoreB) {
+    winner = scoreA > scoreB ? teamA : teamB;
+    // Feed does not always flag AET; leave blank unless elapsed hints
+    const te = String(g.time_elapsed || "").toLowerCase();
+    if (te === "aet" || te.includes("extra")) note = "AET";
+  } else if (stage === "GS") {
+    winner = null;
+  } else {
+    // KO draw without pens data — cannot resolve
+    return null;
+  }
+
+  if (stage !== "GS" && !winner) return null;
+
+  const group = stage === "GS" ? String(g.group || "").replace(/^Group\s*/i, "") : "";
+  return {
+    id: "feed_" + String(g.id || (teamA + "_" + teamB + "_" + stage)),
+    date: formatDateLabel(g.local_date),
+    stage,
+    group: group.length <= 2 ? group : "",
+    teamA,
+    scoreA,
+    scoreB,
+    teamB,
+    winner,
+    note,
+    source: "live-feed",
+    feedId: String(g.id || "")
+  };
+}
+
+function matchKey(m) {
+  // Order-independent team pair + stage
+  const pair = [m.teamA, m.teamB].sort().join("|");
+  return m.stage + "::" + pair;
+}
+
+function sameResult(a, b) {
+  return a.scoreA === b.scoreA && a.scoreB === b.scoreB &&
+    (a.winner || null) === (b.winner || null) &&
+    (a.note || "") === (b.note || "") &&
+    a.teamA === b.teamA && a.teamB === b.teamB;
+}
+
+function mergeFeedIntoMatches(current, feedMapped) {
+  const byKey = new Map();
+  current.forEach((m, idx) => byKey.set(matchKey(m), { m, idx }));
+
+  let updated = 0, added = 0, unchanged = 0;
+  const next = current.slice();
+
+  for (const f of feedMapped) {
+    // Try both orientations for key (already sorted in matchKey)
+    // But scores are oriented teamA/teamB as feed home/away — if our stored match is swapped, normalize
+    const key = matchKey(f);
+    const hit = byKey.get(key);
+    if (hit) {
+      const cur = hit.m;
+      // Align feed orientation to stored orientation if needed
+      let aligned = f;
+      if (cur.teamA === f.teamB && cur.teamB === f.teamA) {
+        aligned = {
+          ...f,
+          teamA: f.teamB,
+          teamB: f.teamA,
+          scoreA: f.scoreB,
+          scoreB: f.scoreA,
+          winner: f.winner
+        };
+      } else if (cur.teamA !== f.teamA || cur.teamB !== f.teamB) {
+        // shouldn't happen with sorted key; skip carefully
+        unchanged++;
+        continue;
+      }
+      if (sameResult(cur, aligned)) {
+        unchanged++;
+        continue;
+      }
+      // Update scores/winner/note; keep stable id if not feed
+      next[hit.idx] = {
+        ...cur,
+        scoreA: aligned.scoreA,
+        scoreB: aligned.scoreB,
+        winner: aligned.winner,
+        note: aligned.note || cur.note || "",
+        date: aligned.date || cur.date,
+        source: "live-feed",
+        feedId: aligned.feedId
+      };
+      updated++;
+    } else {
+      next.push(f);
+      byKey.set(key, { m: f, idx: next.length - 1 });
+      added++;
+    }
+  }
+  return { next, updated, added, unchanged };
+}
+
+function setLiveFeedStatus(text) {
+  const el = document.getElementById("live-feed-status");
+  if (el) el.textContent = text;
+}
+
+async function fetchLiveFeedGames() {
+  const res = await fetch(LIVE_FEED_URL, { cache: "no-store" });
+  if (!res.ok) throw new Error("Feed HTTP " + res.status);
+  const data = await res.json();
+  const games = Array.isArray(data) ? data : (data.games || data.data || []);
+  if (!Array.isArray(games)) throw new Error("Unexpected feed shape");
+  return games;
+}
+
+async function syncLiveScores({ silent } = {}) {
+  if (!isAdmin) {
+    if (!silent) toast("Sign in as admin to sync", true);
+    return;
+  }
+  if (!cloudReady) {
+    if (!silent) toast("Initialize cloud from seed first", true);
+    return;
+  }
+  setLiveFeedStatus("Fetching…");
+  try {
+    const games = await fetchLiveFeedGames();
+    const mapped = [];
+    let skipped = 0;
+    for (const g of games) {
+      const m = mapFeedGame(g);
+      if (m) mapped.push(m); else skipped++;
+    }
+    const { next, updated, added, unchanged } = mergeFeedIntoMatches(matches, mapped);
+    if (updated === 0 && added === 0) {
+      lastSyncAt = new Date().toISOString();
+      lastSyncSummary = `No changes (${mapped.length} finished in feed)`;
+      setLiveFeedStatus(lastSyncSummary + " · " + new Date().toLocaleTimeString());
+      if (!silent) toast("Already up to date");
+      return;
+    }
+    await saveMatches(next);
+    lastSyncAt = new Date().toISOString();
+    lastSyncSummary = `+${added} new, ${updated} updated`;
+    setLiveFeedStatus(lastSyncSummary + " · " + new Date().toLocaleTimeString());
+    if (!silent) toast(`Live sync: ${added} added, ${updated} updated`);
+  } catch (e) {
+    console.error(e);
+    setLiveFeedStatus("Error: " + (e.message || "failed"));
+    if (!silent) toast(e.message || "Live sync failed", true);
+  }
+}
+
+function setAutoSync(on) {
+  autoSyncOn = !!on;
+  const btn = document.getElementById("btn-auto-sync");
+  if (btn) {
+    btn.textContent = autoSyncOn ? "Auto-sync: ON" : "Auto-sync: OFF";
+    btn.classList.toggle("btn-primary", autoSyncOn);
+    btn.classList.toggle("btn-secondary", !autoSyncOn);
+  }
+  if (autoSyncTimer) {
+    clearInterval(autoSyncTimer);
+    autoSyncTimer = null;
+  }
+  if (autoSyncOn) {
+    // run soon, then every 3 min
+    syncLiveScores({ silent: true });
+    autoSyncTimer = setInterval(() => syncLiveScores({ silent: true }), AUTO_SYNC_MS);
+    setLiveFeedStatus("Auto-sync every 3 min");
+  }
+}
+
+
 // ---------- Firebase ----------
 async function initFirebase() {
   if (!isConfigReady()) {
@@ -995,6 +1284,12 @@ document.getElementById("m-team-a").onchange = updateWinnerOptions;
 document.getElementById("m-team-b").onchange = updateWinnerOptions;
 document.getElementById("btn-record").onclick = recordMatch;
 document.getElementById("btn-init-cloud").onclick = initCloudFromSeed;
+document.getElementById("btn-sync-live").onclick = () => syncLiveScores({ silent: false });
+document.getElementById("btn-auto-sync").onclick = () => {
+  if (!isAdmin || !cloudReady) { toast("Admin + cloud required", true); return; }
+  setAutoSync(!autoSyncOn);
+  toast(autoSyncOn ? "Auto-sync ON (every 3 min)" : "Auto-sync OFF");
+};
 document.getElementById("btn-reload").onclick = () => { renderAll(); toast("Refreshed"); };
 
 document.getElementById("btn-login").onclick = async () => {
@@ -1021,5 +1316,5 @@ if (SHOW_ADMIN_TAB_TO_EVERYONE) document.getElementById("admin-tab-btn").classLi
 renderAll();
 initFirebase();
 </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a1a17947ba515aca',t:'MTc4Mzg3NDI1OQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a1a1b38d4c57d4ed',t:'MTc4Mzg3NjY0NQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
