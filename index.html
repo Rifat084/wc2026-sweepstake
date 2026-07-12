@@ -259,7 +259,21 @@
 .bracket-match{border:1px solid var(--border);border-radius:12px;overflow:hidden;background:var(--panel-2);margin-bottom:10px}
 .bm-head{font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);padding:6px 10px;border-bottom:1px solid var(--border)}
 .bracket-side{display:flex;justify-content:space-between;padding:9px 10px;font-size:13px;border-bottom:1px solid rgba(255,255,255,.04)}
-.bracket-side.win{background:rgba(52,211,153,.08);font-weight:800}
+.bracket-side.win{background:rgba(52,211,153,.08)}
+.bracket-team{display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap;min-width:0}
+.bracket-team .team-name{font-weight:800;color:var(--text)}
+.bracket-side.win .team-name{color:var(--good)}
+.owner-sep{color:var(--muted);margin:0 2px;font-weight:600;opacity:.8}
+.owner-label{
+  display:inline-flex;align-items:center;
+  font-size:11px;font-weight:700;letter-spacing:.2px;
+  color:#93c5fd;background:rgba(59,130,246,.14);
+  border:1px solid rgba(96,165,250,.25);
+  padding:2px 8px;border-radius:999px;
+}
+.bracket-score{font-variant-numeric:tabular-nums;min-width:1.5em;text-align:right}
+.speed-presets{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+
 .bracket-final{text-align:center;padding:18px;border-radius:14px;border:1px solid rgba(96,165,250,.35);background:linear-gradient(180deg,rgba(37,99,235,.25),rgba(15,39,68,.9))}
 tr.flash td{animation:rowFlash 1s ease}@keyframes rowFlash{0%{background:rgba(52,211,153,.2)}100%{background:transparent}}
 .share-box{background:rgba(0,0,0,.25);border:1px solid var(--border);border-radius:12px;padding:12px;font-family:ui-monospace,monospace;font-size:12px;white-space:pre-wrap;color:#dbeafe;max-height:220px;overflow:auto}
@@ -522,14 +536,20 @@ tr.flash td{animation:rowFlash 1s ease}@keyframes rowFlash{0%{background:rgba(52
         <div class="admin-box" style="margin-top:12px">
           <h3>Ticker speed (match results bar)</h3>
           <label>Seconds for one full scroll (higher = slower)</label>
-          <input type="range" id="ticker-speed-range" min="15" max="120" step="5" style="width:100%" />
-          <div class="status-line">Current: <strong id="ticker-speed-label">45s</strong> per loop</div>
-          <div class="footer-actions">
-            <button class="btn-secondary btn-sm" type="button" id="btn-ticker-slow">Slower</button>
-            <button class="btn-secondary btn-sm" type="button" id="btn-ticker-default">Default</button>
-            <button class="btn-secondary btn-sm" type="button" id="btn-ticker-fast">Faster</button>
+          <input type="range" id="ticker-speed-range" min="20" max="300" step="5" style="width:100%" />
+          <div class="status-line">Current: <strong id="ticker-speed-label">60s</strong> per full scroll (higher = slower)</div>
+          <div class="speed-presets">
+            <button class="btn-secondary btn-sm" type="button" data-speed="30">Fast 30s</button>
+            <button class="btn-secondary btn-sm" type="button" data-speed="60">Normal 60s</button>
+            <button class="btn-secondary btn-sm" type="button" data-speed="120">Slow 120s</button>
+            <button class="btn-secondary btn-sm" type="button" data-speed="180">Very slow 180s</button>
+            <button class="btn-secondary btn-sm" type="button" data-speed="300">Crawl 300s</button>
           </div>
-          <div class="help" style="margin-top:6px">Saved in this browser only. Affects the scrolling results strip under the header.</div>
+          <div class="footer-actions">
+            <button class="btn-secondary btn-sm" type="button" id="btn-ticker-slow">− Slower</button>
+            <button class="btn-secondary btn-sm" type="button" id="btn-ticker-fast">+ Faster</button>
+          </div>
+          <div class="help" style="margin-top:6px">Saved in this browser only. Drag the slider or tap a preset. Max is 5 minutes per loop.</div>
         </div>
         <div class="help">
           First time: sign in → <strong>Initialize cloud from seed</strong>.<br>
@@ -632,8 +652,8 @@ function flag(team){
   return `<img class="flag-img" src="${src}" srcset="${src2} 1x, ${src} 2x" width="20" height="15" alt="" title="${String(team).replace(/"/g,"")}" loading="lazy" decoding="async" onerror="this.style.display='none'" />`;
 }
 function avatar(name){const c=PERSON_COLORS[name]||"#2563eb";const ch=String(name||"?").slice(0,1).toUpperCase();return `<span class="avatar-sm" style="background:${c}">${ch}</span>`;}
-let tickerSpeedSec = Number(localStorage.getItem("wc2026_ticker_speed") || 45);
-if (!Number.isFinite(tickerSpeedSec) || tickerSpeedSec < 10) tickerSpeedSec = 45;
+let tickerSpeedSec = Number(localStorage.getItem("wc2026_ticker_speed") || 60);
+if (!Number.isFinite(tickerSpeedSec) || tickerSpeedSec < 20) tickerSpeedSec = 60;
 let prevPtsMap = {};
 let countdownTimer = null;
 let confettiDoneFor = null;
@@ -1355,8 +1375,14 @@ function findMatchUI(stage,a,b){
 }
 function bracketSide(team, score, winner){
   const win = winner && team===winner;
-  const owner = OWNER[team] ? `<span class="owner">${esc(OWNER[team])}</span>` : "";
-  return `<div class="bracket-side ${win?"win":""}"><span>${flag(team)}${esc(team)} ${owner}</span><strong>${score??"—"}</strong></div>`;
+  const ownerName = OWNER[team] || "";
+  const ownerHtml = ownerName
+    ? `<span class="owner-sep">·</span><span class="owner-label">${esc(ownerName)}</span>`
+    : "";
+  return `<div class="bracket-side ${win?"win":""}">
+    <span class="bracket-team">${flag(team)}<strong class="team-name">${esc(team)}</strong>${ownerHtml}</span>
+    <strong class="bracket-score">${score??"—"}</strong>
+  </div>`;
 }
 function renderBracketUI(){
   const el = document.getElementById("bracket"); if (!el) return;
@@ -1378,7 +1404,7 @@ function renderBracketUI(){
     <div>${card("Final", fin||{teamA:w1||"TBD",teamB:w2||"TBD",scoreA:"—",scoreB:"—",stage:"F"})}${card("3rd place", third||{teamA:"TBD",teamB:"TBD",scoreA:"—",scoreB:"—",stage:"3RD"})}</div>`;
 }
 function applyTickerSpeed(){
-  const sec = Number(tickerSpeedSec) || 45;
+  const sec = Number(tickerSpeedSec) || 60;
   document.documentElement.style.setProperty("--ticker-speed", sec + "s");
   const label = document.getElementById("ticker-speed-label");
   const range = document.getElementById("ticker-speed-range");
@@ -1390,7 +1416,7 @@ function applyTickerSpeed(){
   }
 }
 function setTickerSpeed(sec){
-  tickerSpeedSec = Math.max(15, Math.min(120, Number(sec) || 45));
+  tickerSpeedSec = Math.max(20, Math.min(300, Number(sec) || 60));
   localStorage.setItem("wc2026_ticker_speed", String(tickerSpeedSec));
   applyTickerSpeed();
 }
@@ -2029,12 +2055,14 @@ if (_rng) {
   _rng.value = String(tickerSpeedSec);
   _rng.oninput = () => setTickerSpeed(_rng.value);
 }
-const _ts=document.getElementById("btn-ticker-slow"); if(_ts) _ts.onclick=()=>setTickerSpeed(tickerSpeedSec+10);
-const _td=document.getElementById("btn-ticker-default"); if(_td) _td.onclick=()=>setTickerSpeed(45);
-const _tf=document.getElementById("btn-ticker-fast"); if(_tf) _tf.onclick=()=>setTickerSpeed(tickerSpeedSec-10);
+document.querySelectorAll("[data-speed]").forEach(btn => {
+  btn.onclick = () => setTickerSpeed(btn.getAttribute("data-speed"));
+});
+const _ts=document.getElementById("btn-ticker-slow"); if(_ts) _ts.onclick=()=>setTickerSpeed(tickerSpeedSec+15);
+const _tf=document.getElementById("btn-ticker-fast"); if(_tf) _tf.onclick=()=>setTickerSpeed(tickerSpeedSec-15);
 applyTickerSpeed();
 renderAll();
 initFirebase();
 </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a1a2a79289acd4ed',t:'MTc4Mzg4NjY0MQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a1a2b30858aedd0d',t:'MTc4Mzg4NzExMA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
