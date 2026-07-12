@@ -537,7 +537,8 @@ tr.flash td{animation:rowFlash 1s ease}@keyframes rowFlash{0%{background:rgba(52
           <h3>Ticker speed (match results bar)</h3>
           <label>Seconds for one full scroll (higher = slower)</label>
           <input type="range" id="ticker-speed-range" min="20" max="300" step="5" style="width:100%" />
-          <div class="status-line">Current: <strong id="ticker-speed-label">60s</strong> per full scroll (higher = slower)</div>
+          <div class="status-line">Preview on this screen: <strong id="ticker-speed-label">60s</strong> per loop</div>
+          <div class="status-line">Live for everyone: <strong id="ticker-speed-live">—</strong></div>
           <div class="speed-presets">
             <button class="btn-secondary btn-sm" type="button" data-speed="30">Fast 30s</button>
             <button class="btn-secondary btn-sm" type="button" data-speed="60">Normal 60s</button>
@@ -548,8 +549,11 @@ tr.flash td{animation:rowFlash 1s ease}@keyframes rowFlash{0%{background:rgba(52
           <div class="footer-actions">
             <button class="btn-secondary btn-sm" type="button" id="btn-ticker-slow">− Slower</button>
             <button class="btn-secondary btn-sm" type="button" id="btn-ticker-fast">+ Faster</button>
+            <button class="btn-primary btn-sm" type="button" id="btn-ticker-save-live" disabled>Save speed for everyone</button>
           </div>
-          <div class="help" style="margin-top:6px">Saved in this browser only. Drag the slider or tap a preset. Max is 5 minutes per loop.</div>
+          <div class="help" style="margin-top:6px">
+            Drag/presets preview instantly on <em>your</em> screen. Click <strong>Save speed for everyone</strong> to push it live to all viewers via Firebase.
+          </div>
         </div>
         <div class="help">
           First time: sign in → <strong>Initialize cloud from seed</strong>.<br>
@@ -652,8 +656,9 @@ function flag(team){
   return `<img class="flag-img" src="${src}" srcset="${src2} 1x, ${src} 2x" width="20" height="15" alt="" title="${String(team).replace(/"/g,"")}" loading="lazy" decoding="async" onerror="this.style.display='none'" />`;
 }
 function avatar(name){const c=PERSON_COLORS[name]||"#2563eb";const ch=String(name||"?").slice(0,1).toUpperCase();return `<span class="avatar-sm" style="background:${c}">${ch}</span>`;}
-let tickerSpeedSec = Number(localStorage.getItem("wc2026_ticker_speed") || 60);
-if (!Number.isFinite(tickerSpeedSec) || tickerSpeedSec < 20) tickerSpeedSec = 60;
+let tickerSpeedSec = 60; // global default; overridden by Firebase settings.tickerSpeedSec when live
+let tickerSpeedDirty = false; // true when admin preview differs from saved live value
+let tickerSpeedLiveSec = 60;
 let prevPtsMap = {};
 let countdownTimer = null;
 let confettiDoneFor = null;
@@ -833,6 +838,10 @@ function setBadges() {
   const resetRulesBtn = document.getElementById("btn-reset-rules");
   if (saveRulesBtn) saveRulesBtn.disabled = !canEdit;
   if (resetRulesBtn) resetRulesBtn.disabled = !canEdit;
+  const saveTickerBtn = document.getElementById("btn-ticker-save-live");
+  if (saveTickerBtn) saveTickerBtn.disabled = !canEdit || !tickerSpeedDirty;
+  // keep live label fresh
+  try { applyTickerSpeed(); } catch(e) {}
   const lock = document.getElementById("rules-edit-lock");
   if (lock) lock.textContent = canEdit ? "Editable" : "Admin only";
   const rnote = document.getElementById("rules-save-note");
@@ -842,6 +851,11 @@ function setBadges() {
   // enable/disable scoring inputs
   document.querySelectorAll("#scoring-form input, #mystic-picks-form select").forEach(el => {
     el.disabled = !canEdit;
+  });
+  const tRange = document.getElementById("ticker-speed-range");
+  if (tRange) tRange.disabled = !canEdit;
+  document.querySelectorAll("[data-speed], #btn-ticker-slow, #btn-ticker-fast").forEach(el => {
+    if (el) el.disabled = !canEdit;
   });
   if (!isAdmin && autoSyncOn) setAutoSync(false);
   document.getElementById("edit-lock-note").textContent = canEdit
@@ -1403,22 +1417,68 @@ function renderBracketUI(){
     </div>
     <div>${card("Final", fin||{teamA:w1||"TBD",teamB:w2||"TBD",scoreA:"—",scoreB:"—",stage:"F"})}${card("3rd place", third||{teamA:"TBD",teamB:"TBD",scoreA:"—",scoreB:"—",stage:"3RD"})}</div>`;
 }
+function clampTickerSpeed(sec){
+  const n = Number(sec);
+  if (!Number.isFinite(n)) return 60;
+  return Math.max(20, Math.min(300, Math.round(n)));
+}
 function applyTickerSpeed(){
-  const sec = Number(tickerSpeedSec) || 60;
+  const sec = clampTickerSpeed(tickerSpeedSec);
+  tickerSpeedSec = sec;
   document.documentElement.style.setProperty("--ticker-speed", sec + "s");
   const label = document.getElementById("ticker-speed-label");
   const range = document.getElementById("ticker-speed-range");
+  const live = document.getElementById("ticker-speed-live");
   if (label) label.textContent = sec + "s";
   if (range && document.activeElement !== range) range.value = String(sec);
+  if (live) {
+    const liveSec = clampTickerSpeed(tickerSpeedLiveSec);
+    live.textContent = liveSec + "s" + (tickerSpeedDirty && isAdmin ? " (unsaved preview)" : "");
+  }
   const track = document.getElementById("ticker-track");
-  if (track) {
-    track.style.animationDuration = sec + "s";
+  if (track) track.style.animationDuration = sec + "s";
+  // highlight save button when dirty
+  const saveBtn = document.getElementById("btn-ticker-save-live");
+  if (saveBtn) {
+    saveBtn.disabled = !(isAdmin && cloudReady) || !tickerSpeedDirty;
+    saveBtn.textContent = tickerSpeedDirty ? "Save speed for everyone" : "Speed saved for everyone";
   }
 }
-function setTickerSpeed(sec){
-  tickerSpeedSec = Math.max(20, Math.min(300, Number(sec) || 60));
-  localStorage.setItem("wc2026_ticker_speed", String(tickerSpeedSec));
+function setTickerSpeed(sec, {fromCloud = false} = {}){
+  const next = clampTickerSpeed(sec);
+  tickerSpeedSec = next;
+  if (fromCloud) {
+    tickerSpeedLiveSec = next;
+    tickerSpeedDirty = false;
+  } else if (isAdmin) {
+    // admin preview — not live until saved
+    tickerSpeedDirty = (next !== clampTickerSpeed(tickerSpeedLiveSec));
+  } else {
+    // viewers should only follow cloud; ignore local edits
+    tickerSpeedSec = clampTickerSpeed(tickerSpeedLiveSec);
+    tickerSpeedDirty = false;
+  }
   applyTickerSpeed();
+}
+async function saveTickerSpeedLive(){
+  if (!isAdmin || !cloudReady) { toast("Admin + cloud required", true); return; }
+  if (!db || !window.__fb || !auth?.currentUser) { toast("Firebase not ready", true); return; }
+  const sec = clampTickerSpeed(tickerSpeedSec);
+  try {
+    const { doc, setDoc, serverTimestamp } = window.__fb;
+    await setDoc(doc(db, DOC_PATH.col, DOC_PATH.id), {
+      settings: { tickerSpeedSec: sec },
+      updatedAt: serverTimestamp(),
+      updatedAtClient: new Date().toISOString(),
+      updatedBy: auth.currentUser.email || "admin"
+    }, { merge: true });
+    tickerSpeedLiveSec = sec;
+    tickerSpeedDirty = false;
+    applyTickerSpeed();
+    toast("Ticker speed saved for everyone (" + sec + "s)");
+  } catch (e) {
+    toast(e.message || "Failed to save ticker speed", true);
+  }
 }
 function renderTickerUI(matchAlloc, standings){
   const track=document.getElementById("ticker-track"); if(!track) return;
@@ -1887,11 +1947,23 @@ async function initFirebase() {
           }
           mystic = { picks };
         }
+        // Global ticker speed for all viewers
+        if (data.settings && data.settings.tickerSpeedSec != null) {
+          const liveSec = clampTickerSpeed(data.settings.tickerSpeedSec);
+          tickerSpeedLiveSec = liveSec;
+          // Viewers always follow live. Admin keeps preview only if dirty.
+          if (!isAdmin || !tickerSpeedDirty) {
+            tickerSpeedSec = liveSec;
+            tickerSpeedDirty = false;
+          }
+        }
       } else {
         cloudReady = false;
         matches = SEED.matches.map((m, i) => ({ ...m, id: "seed_" + i }));
         scoring = defaultScoring();
         mystic = defaultMystic();
+        tickerSpeedLiveSec = 60;
+        if (!tickerSpeedDirty) tickerSpeedSec = 60;
       }
       renderAll();
     }, (err) => {
@@ -1938,6 +2010,7 @@ async function initCloudFromSeed() {
       matches: seeded,
       scoring: defaultScoring(),
       mystic: defaultMystic(),
+      settings: { tickerSpeedSec: clampTickerSpeed(tickerSpeedSec || 60) },
       updatedAt: serverTimestamp(),
       updatedAtClient: new Date().toISOString(),
       updatedBy: auth.currentUser.email || "admin"
@@ -2060,9 +2133,10 @@ document.querySelectorAll("[data-speed]").forEach(btn => {
 });
 const _ts=document.getElementById("btn-ticker-slow"); if(_ts) _ts.onclick=()=>setTickerSpeed(tickerSpeedSec+15);
 const _tf=document.getElementById("btn-ticker-fast"); if(_tf) _tf.onclick=()=>setTickerSpeed(tickerSpeedSec-15);
+const _saveTicker=document.getElementById("btn-ticker-save-live"); if(_saveTicker) _saveTicker.onclick=saveTickerSpeedLive;
 applyTickerSpeed();
 renderAll();
 initFirebase();
 </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a1a2b30858aedd0d',t:'MTc4Mzg4NzExMA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a1a2bd334ff8d4ed',t:'MTc4Mzg4NzUyNg=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
