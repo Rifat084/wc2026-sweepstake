@@ -429,14 +429,19 @@
 // ============================================================
 // 1) PASTE YOUR FIREBASE WEB CONFIG BELOW (from Firebase Console)
 // ============================================================
-const FIREBASE_CONFIG = {
-  apiKey: "PASTE_API_KEY",
-  authDomain: "PASTE_PROJECT_ID.firebaseapp.com",
-  projectId: "PASTE_PROJECT_ID",
-  storageBucket: "PASTE_PROJECT_ID.appspot.com",
-  messagingSenderId: "PASTE_SENDER_ID",
-  appId: "PASTE_APP_ID"
+const firebaseConfig = {
+  apiKey: "AIzaSyBh8ec9HEhdJP2vE8kqzgvXlHSuyJYCxwA",
+  authDomain: "wc2026-sweepstake-44dd0.firebaseapp.com",
+  projectId: "wc2026-sweepstake-44dd0",
+  storageBucket: "wc2026-sweepstake-44dd0.firebasestorage.app",
+  messagingSenderId: "263984316374",
+  appId: "1:263984316374:web:b57057896a6194319aee77",
+  measurementId: "G-VHJ6Q85C9M"
 };
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const analytics = getAnalytics(app);
 
 // Optional: show Admin tab link even for viewers (they still cannot write)
 const SHOW_ADMIN_TAB_TO_EVERYONE = true;
