@@ -220,9 +220,20 @@
   </div>
 </header>
 <div id="ticker" style="overflow:hidden;white-space:nowrap;border-bottom:1px solid var(--border);background:rgba(15,39,68,.55);font-size:12px;color:var(--muted);padding:8px 0">
-  <div id="ticker-track" style="display:inline-block;padding-left:100%;animation:taxMarquee 40s linear infinite">Loading updates…</div>
+  <div id="ticker-track" style="display:inline-block;padding-left:100%;animation:taxMarquee var(--ticker-speed,45s) linear infinite">Loading updates…</div>
 </div>
 <style>@keyframes taxMarquee{from{transform:translateX(0)}to{transform:translateX(-100%)}}
+.flag-img{display:inline-block;width:20px;height:15px;object-fit:cover;border-radius:2px;margin-right:6px;vertical-align:-2px;box-shadow:0 0 0 1px rgba(255,255,255,.12)}
+#ticker-track{animation-duration:var(--ticker-speed,45s)!important;will-change:transform}
+.pulse-stat{display:flex;justify-content:space-between;gap:8px;margin-top:10px}
+.pulse-stat .ps{flex:1;text-align:center;padding:8px 4px;border-radius:10px;background:rgba(0,0,0,.22);border:1px solid var(--border)}
+.pulse-stat .ps b{display:block;font-size:16px;color:#7dd3fc}
+.pulse-stat .ps span{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px}
+.compare-grid{display:grid;grid-template-columns:1fr auto 1fr;gap:12px;align-items:start}
+@media(max-width:800px){.compare-grid{grid-template-columns:1fr}}
+.compare-card{border:1px solid var(--border);border-radius:14px;padding:14px;background:var(--panel-2)}
+.compare-vs{display:grid;place-items:center;font-weight:900;font-size:22px;color:var(--accent-2);padding-top:40px}
+
 .badge.live{background:rgba(52,211,153,.18)!important;color:var(--good)!important;border:1px solid rgba(52,211,153,.35)}
 .badge.admin{background:rgba(59,130,246,.28)!important;color:#dbeafe!important}
 .btn-primary{background:linear-gradient(180deg,#3b82f6,#2563eb)!important;color:#fff!important}
@@ -257,7 +268,7 @@ tr.flash td{animation:rowFlash 1s ease}@keyframes rowFlash{0%{background:rgba(52
 <div class="tabs">
   <button class="tab active" data-tab="standings">🏅 Standings</button>
   <button class="tab" data-tab="bracket">🌳 Bracket</button>
-  <button class="tab" data-tab="whatif">🔮 What-if</button>
+  <button class="tab" data-tab="compare">⚔️ Head-to-Head</button>
   <button class="tab" data-tab="rosters">👥 Rosters</button>
   <button class="tab" data-tab="matches">⚽ Matches</button>
   <button class="tab" data-tab="rules">📋 Rules</button>
@@ -276,9 +287,14 @@ tr.flash td{animation:rowFlash 1s ease}@keyframes rowFlash{0%{background:rgba(52
         <div class="countdown" id="countdown"></div>
       </div>
       <div class="hero-card">
-        <h3>Live status</h3>
+        <h3>Race meter</h3>
         <div class="big" id="hero-sync">—</div>
-        <div class="sub" id="hero-sync-sub">Firebase + feed sync</div>
+        <div class="sub" id="hero-sync-sub">Gap to leader</div>
+        <div class="pulse-stat">
+          <div class="ps"><b id="pulse-live">—</b><span>Still live</span></div>
+          <div class="ps"><b id="pulse-ko">—</b><span>KO left</span></div>
+          <div class="ps"><b id="pulse-gap">—</b><span>Pts gap 1–2</span></div>
+        </div>
       </div>
       <div class="hero-card">
         <h3>Leader</h3>
@@ -329,16 +345,24 @@ tr.flash td{animation:rowFlash 1s ease}@keyframes rowFlash{0%{background:rgba(52
       <div class="help">Updates when SF/Final results are synced or recorded.</div>
     </div>
   </div>
-  <div class="panel-view" id="view-whatif">
+  <div class="panel-view" id="view-compare">
     <div class="card">
-      <h2><span>What-if simulator</span><span class="count">Local only · does not save</span></h2>
-      <div class="help" style="margin-top:0;margin-bottom:10px">Project standings if remaining knockout matches finish a certain way. Never writes to Firebase.</div>
-      <div id="sim-controls" class="match-form"></div>
-      <div class="footer-actions">
-        <button class="btn-primary" type="button" id="btn-run-sim">Run projection</button>
-        <button class="btn-secondary" type="button" id="btn-clear-sim">Clear</button>
+      <h2><span>Head-to-Head</span><span class="count">Compare two players</span></h2>
+      <div class="help" style="margin-top:0;margin-bottom:12px">Pick two participants to compare points, attack/defense, knockout form, and mystic picks.</div>
+      <div class="match-form">
+        <div>
+          <label>Player A</label>
+          <select id="cmp-a"></select>
+        </div>
+        <div>
+          <label>Player B</label>
+          <select id="cmp-b"></select>
+        </div>
       </div>
-      <div id="sim-result" style="margin-top:12px"></div>
+      <div class="footer-actions">
+        <button class="btn-primary" type="button" id="btn-run-compare">Compare</button>
+      </div>
+      <div id="compare-result" style="margin-top:14px"></div>
     </div>
   </div>
   <div class="panel-view" id="view-rosters">
@@ -495,11 +519,21 @@ tr.flash td{animation:rowFlash 1s ease}@keyframes rowFlash{0%{background:rgba(52
           <button class="btn-secondary" id="btn-reload">Force refresh</button>
         </div>
         <div class="status-line">Live feed: <strong id="live-feed-status">Idle</strong></div>
+        <div class="admin-box" style="margin-top:12px">
+          <h3>Ticker speed (match results bar)</h3>
+          <label>Seconds for one full scroll (higher = slower)</label>
+          <input type="range" id="ticker-speed-range" min="15" max="120" step="5" style="width:100%" />
+          <div class="status-line">Current: <strong id="ticker-speed-label">45s</strong> per loop</div>
+          <div class="footer-actions">
+            <button class="btn-secondary btn-sm" type="button" id="btn-ticker-slow">Slower</button>
+            <button class="btn-secondary btn-sm" type="button" id="btn-ticker-default">Default</button>
+            <button class="btn-secondary btn-sm" type="button" id="btn-ticker-fast">Faster</button>
+          </div>
+          <div class="help" style="margin-top:6px">Saved in this browser only. Affects the scrolling results strip under the header.</div>
+        </div>
         <div class="help">
           First time: sign in → <strong>Initialize cloud from seed</strong>.<br>
-          Then use <strong>Sync live scores</strong> to pull finished World Cup results from the free public feed
-          (<code>worldcup26.ir</code>) and update points for everyone. Optional <strong>Auto-sync</strong> polls every 3 minutes while you stay signed in as admin.<br>
-          You can still enter a match manually if the feed is late or wrong.
+          Then use <strong>Sync live scores</strong> or <strong>Auto-sync</strong> so finished World Cup results update points for everyone.
         </div>
         <h2 style="margin-top:18px">Suggested fixtures</h2>
         <div id="upcoming"></div>
@@ -579,9 +613,27 @@ const ALL_TEAMS = Object.keys(OWNER).sort((a, b) => a.localeCompare(b));
 const PARTICIPANTS = Object.keys(SEED.rosters);
 
 const PERSON_COLORS = {Saira:"#2563eb",Rachel:"#0891b2",Troy:"#7c3aed",Jabed:"#059669",Rifat:"#d97706",Aminah:"#db2777"};
-const FLAG = {"Argentina":"🇦🇷","France":"🇫🇷","Spain":"🇪🇸","England":"🏴󠁧󠁢󠁥󠁮󠁧󠁿","Portugal":"🇵🇹","Brazil":"🇧🇷","Netherlands":"🇳🇱","Morocco":"🇲🇦","Belgium":"🇧🇪","Germany":"🇩🇪","Croatia":"🇭🇷","Colombia":"🇨🇴","Senegal":"🇸🇳","Mexico":"🇲🇽","USA":"🇺🇸","Uruguay":"🇺🇾","Japan":"🇯🇵","Switzerland":"🇨🇭","Iran":"🇮🇷","Türkiye":"🇹🇷","Ecuador":"🇪🇨","Austria":"🇦🇹","South Korea":"🇰🇷","Australia":"🇦🇺","Algeria":"🇩🇿","Egypt":"🇪🇬","Canada":"🇨🇦","Norway":"🇳🇴","Panama":"🇵🇦","Côte d'Ivoire":"🇨🇮","Sweden":"🇸🇪","Paraguay":"🇵🇾","Czechia":"🇨🇿","Scotland":"🏴󠁧󠁢󠁳󠁣󠁴󠁿","Tunisia":"🇹🇳","DR Congo":"🇨🇩","Uzbekistan":"🇺🇿","Iraq":"🇮🇶","Qatar":"🇶🇦","South Africa":"🇿🇦","Saudi Arabia":"🇸🇦","Jordan":"🇯🇴","Bosnia & Herzegovina":"🇧🇦","Cape Verde":"🇨🇻","Ghana":"🇬🇭","Curaçao":"🇨🇼","Haiti":"🇭🇹","New Zealand":"🇳🇿"};
-function flag(team){return FLAG[team]?`<span class="flag">${FLAG[team]}</span>`:"";}
+const FLAG_CODE = {
+  "Argentina":"ar","France":"fr","Spain":"es","England":"gb-eng","Portugal":"pt","Brazil":"br",
+  "Netherlands":"nl","Morocco":"ma","Belgium":"be","Germany":"de","Croatia":"hr","Colombia":"co",
+  "Senegal":"sn","Mexico":"mx","USA":"us","Uruguay":"uy","Japan":"jp","Switzerland":"ch",
+  "Iran":"ir","Türkiye":"tr","Ecuador":"ec","Austria":"at","South Korea":"kr","Australia":"au",
+  "Algeria":"dz","Egypt":"eg","Canada":"ca","Norway":"no","Panama":"pa","Côte d'Ivoire":"ci",
+  "Sweden":"se","Paraguay":"py","Czechia":"cz","Scotland":"gb-sct","Tunisia":"tn","DR Congo":"cd",
+  "Uzbekistan":"uz","Iraq":"iq","Qatar":"qa","South Africa":"za","Saudi Arabia":"sa","Jordan":"jo",
+  "Bosnia & Herzegovina":"ba","Cape Verde":"cv","Ghana":"gh","Curaçao":"cw","Haiti":"ht","New Zealand":"nz"
+};
+function flag(team){
+  const code = FLAG_CODE[team];
+  if (!code) return "";
+  // flagcdn supports regional codes like gb-eng / gb-sct
+  const src = `https://flagcdn.com/w40/${code}.png`;
+  const src2 = `https://flagcdn.com/24x18/${code}.png`;
+  return `<img class="flag-img" src="${src}" srcset="${src2} 1x, ${src} 2x" width="20" height="15" alt="" title="${String(team).replace(/"/g,"")}" loading="lazy" decoding="async" onerror="this.style.display='none'" />`;
+}
 function avatar(name){const c=PERSON_COLORS[name]||"#2563eb";const ch=String(name||"?").slice(0,1).toUpperCase();return `<span class="avatar-sm" style="background:${c}">${ch}</span>`;}
+let tickerSpeedSec = Number(localStorage.getItem("wc2026_ticker_speed") || 45);
+if (!Number.isFinite(tickerSpeedSec) || tickerSpeedSec < 10) tickerSpeedSec = 45;
 let prevPtsMap = {};
 let countdownTimer = null;
 let confettiDoneFor = null;
@@ -748,10 +800,7 @@ function setBadges() {
   const ab = document.getElementById("admin-badge");
   if (isAdmin) { ab.textContent = "Admin"; ab.className = "badge admin"; }
   else { ab.textContent = "Viewer"; ab.className = "badge off"; }
-  const hs = document.getElementById("hero-sync");
-  const hss = document.getElementById("hero-sync-sub");
-  if (hs) hs.textContent = cloudReady ? "LIVE" : (isConfigReady() ? "Local" : "Setup");
-  if (hss) hss.textContent = lastUpdated ? ("Updated " + new Date(lastUpdated).toLocaleString()) : (cloudReady ? "Connected" : "Initialize cloud to share live");
+  // race meter filled in renderAll via updateRaceMeter()
 
   const canEdit = isAdmin && cloudReady;
   document.getElementById("btn-record").disabled = !canEdit;
@@ -820,7 +869,9 @@ function renderAll() {
   try { renderNextMatchHero(); } catch(e){ console.warn(e); }
   try { renderBracketUI(); } catch(e){ console.warn(e); }
   try { renderTickerUI(matchAlloc, standings); } catch(e){ console.warn(e); }
-  try { renderSimControlsUI(); } catch(e){ console.warn(e); }
+  try { renderCompareUI(); } catch(e){ console.warn(e); }
+  try { updateRaceMeter(standings, part); } catch(e){ console.warn(e); }
+  try { applyTickerSpeed(); } catch(e){}
   try {
     const leader = standings[0];
     const hl = document.getElementById("hero-leader");
@@ -1326,55 +1377,124 @@ function renderBracketUI(){
     </div>
     <div>${card("Final", fin||{teamA:w1||"TBD",teamB:w2||"TBD",scoreA:"—",scoreB:"—",stage:"F"})}${card("3rd place", third||{teamA:"TBD",teamB:"TBD",scoreA:"—",scoreB:"—",stage:"3RD"})}</div>`;
 }
+function applyTickerSpeed(){
+  const sec = Number(tickerSpeedSec) || 45;
+  document.documentElement.style.setProperty("--ticker-speed", sec + "s");
+  const label = document.getElementById("ticker-speed-label");
+  const range = document.getElementById("ticker-speed-range");
+  if (label) label.textContent = sec + "s";
+  if (range && document.activeElement !== range) range.value = String(sec);
+  const track = document.getElementById("ticker-track");
+  if (track) {
+    track.style.animationDuration = sec + "s";
+  }
+}
+function setTickerSpeed(sec){
+  tickerSpeedSec = Math.max(15, Math.min(120, Number(sec) || 45));
+  localStorage.setItem("wc2026_ticker_speed", String(tickerSpeedSec));
+  applyTickerSpeed();
+}
 function renderTickerUI(matchAlloc, standings){
   const track=document.getElementById("ticker-track"); if(!track) return;
-  const recent=matchAlloc.filter(x=>x.m.stage!=="GS").slice(-8).reverse();
+  const recent=matchAlloc.filter(x=>x.m.stage!=="GS").slice(-10).reverse();
   const bits=[];
   for (const {m,ptsA,ptsB} of recent){
     const w=resolveWinner(m);
-    bits.push(`<b>${esc(m.stage)}</b> ${flag(m.teamA)}${esc(m.teamA)} ${m.scoreA}-${m.scoreB} ${flag(m.teamB)}${esc(m.teamB)}${w?` · <span class="up">${esc(OWNER[w]||"")} +${w===m.teamA?ptsA:ptsB}</span>`:""}`);
+    const gain = w ? (w===m.teamA?ptsA:ptsB) : 0;
+    const owner = w ? (OWNER[w]||"") : "";
+    bits.push(`<b>${esc(m.stage)}</b> ${flag(m.teamA)}<b>${esc(m.teamA)}</b> ${m.scoreA}–${m.scoreB} ${flag(m.teamB)}<b>${esc(m.teamB)}</b>${w?` · <span class="up">${esc(owner)} +${gain}</span>`:""}`);
   }
   if (standings[0]) bits.push(`Leader: <b>${esc(standings[0].name)}</b> ${standings[0].pts} pts`);
-  bits.push(`Sync: <b>${cloudReady?"LIVE":"local"}</b>`);
-  const line = bits.join(' <span class="sep">•</span> ') || "Simply US Tax Sweepstake";
-  track.innerHTML = line + ' <span class="sep">•</span> ' + line;
+  bits.push(`Still live: <b>${standings.reduce((n,s)=>n+Object.values(s.teams||{}).filter(t=>t.alive).length,0)}</b> teams`);
+  const line = bits.join(' &nbsp;•&nbsp; ') || "Simply US Tax Sweepstake";
+  // duplicate for continuous scroll
+  track.innerHTML = line + ' &nbsp;•&nbsp; ' + line + ' &nbsp;•&nbsp; ' + line;
+  applyTickerSpeed();
 }
-function renderSimControlsUI(){
-  const el=document.getElementById("sim-controls"); if(!el) return;
-  const fixtures=getSuggestedFixturesUI();
-  window.__simFixtures=fixtures;
-  if(!fixtures.length){ el.innerHTML='<div class="empty">No remaining knockout fixtures to simulate.</div>'; return; }
-  el.innerHTML = fixtures.map((f,i)=>`
-    <div class="admin-box"><h3>${esc(f.stage)} · ${flag(f.a)}${esc(f.a)} vs ${flag(f.b)}${esc(f.b)}</h3>
-      <label>Projected winner</label>
-      <select id="sim-${i}"><option value="">— skip —</option>
-        <option value="${esc(f.a)}">${esc(f.a)} (${esc(OWNER[f.a]||"?")})</option>
-        <option value="${esc(f.b)}">${esc(f.b)} (${esc(OWNER[f.b]||"?")})</option>
-      </select></div>`).join("");
+function updateRaceMeter(standings, part){
+  const hs=document.getElementById("hero-sync");
+  const hss=document.getElementById("hero-sync-sub");
+  if (!standings.length) return;
+  const leader=standings[0];
+  const second=standings[1];
+  const gap = second ? (leader.pts - second.pts) : 0;
+  let liveTeams=0;
+  for (const s of standings) for (const t of Object.values(part[s.name].teams)) if (t.alive) liveTeams++;
+  const koLeft = matches.filter(m => ["SF","F","3RD"].includes(m.stage) && !resolveWinner(m)).length;
+  // nicer headline: chase narrative
+  if (hs) {
+    if (second && gap <= 5) hs.textContent = "Tight race";
+    else if (second && gap <= 12) hs.textContent = leader.name + " leads";
+    else hs.textContent = leader.name + " clear";
+  }
+  if (hss) hss.textContent = second ? (`${leader.name} by ${gap} pts over ${second.name}`) : "Only one player on the board";
+  const pl=document.getElementById("pulse-live"); if (pl) pl.textContent = String(liveTeams);
+  const pk=document.getElementById("pulse-ko"); if (pk) pk.textContent = String(Math.max(koLeft, 0));
+  const pg=document.getElementById("pulse-gap"); if (pg) pg.textContent = second ? String(gap) : "—";
 }
-function runSimUI(){
-  const fixtures=window.__simFixtures||[];
-  const extra=[];
-  fixtures.forEach((f,i)=>{
-    const w=document.getElementById("sim-"+i)?.value; if(!w) return;
-    extra.push({id:"sim_"+i,date:f.date,stage:f.stage,group:"",teamA:f.a,teamB:f.b,scoreA:w===f.a?1:0,scoreB:w===f.b?1:0,winner:w,note:"sim"});
-  });
-  if(!extra.length){ toast("Pick at least one winner", true); return; }
-  const projected=matches.filter(m=>m.note!=="sim").concat(extra);
-  const before=compute().standings;
-  // temporarily use projected via compute override if available
-  const saved=matches; matches=projected;
-  const after=compute().standings; matches=saved;
-  const beforeMap=Object.fromEntries(before.map(s=>[s.name,s]));
-  const rows=after.map((s,i)=>{
-    const b=beforeMap[s.name]; const dPts=s.pts-(b?.pts||0);
-    const cls=dPts>0?"up":dPts<0?"down":"same";
-    return `<tr><td><span class="rank">${i+1}</span></td><td><span class="name-chip">${avatar(s.name)}<strong>${esc(s.name)}</strong></span></td>
-      <td class="pts">${s.pts}</td><td class="num">${b?.pts??"—"}</td>
-      <td class="${cls==="up"?"gd-pos":cls==="down"?"gd-neg":""}" style="font-weight:700">${dPts>0?"+"+dPts:dPts} pts</td></tr>`;
-  }).join("");
-  document.getElementById("sim-result").innerHTML=`<div class="table-wrap"><table><thead><tr><th>#</th><th>Participant</th><th class="num">Projected</th><th class="num">Now</th><th>Delta</th></tr></thead><tbody>${rows}</tbody></table></div><div class="help">Projection only — not saved.</div>`;
+function renderCompareUI(){
+  const a=document.getElementById("cmp-a");
+  const b=document.getElementById("cmp-b");
+  if (!a || !b) return;
+  const opts = PARTICIPANTS.map(n => `<option value="${esc(n)}">${esc(n)}</option>`).join("");
+  const curA=a.value, curB=b.value;
+  a.innerHTML = opts; b.innerHTML = opts;
+  a.value = curA && PARTICIPANTS.includes(curA) ? curA : PARTICIPANTS[0];
+  b.value = curB && PARTICIPANTS.includes(curB) ? curB : (PARTICIPANTS[1]||PARTICIPANTS[0]);
+  if (a.value === b.value && PARTICIPANTS[1]) b.value = PARTICIPANTS.find(p => p !== a.value) || b.value;
 }
+function runCompareUI(){
+  const nameA=document.getElementById("cmp-a")?.value;
+  const nameB=document.getElementById("cmp-b")?.value;
+  if (!nameA || !nameB) return;
+  if (nameA === nameB) { toast("Pick two different players", true); return; }
+  const { part, standings, champion } = compute();
+  const A = standings.find(s => s.name===nameA);
+  const B = standings.find(s => s.name===nameB);
+  if (!A || !B) return;
+  const rankA = standings.findIndex(s=>s.name===nameA)+1;
+  const rankB = standings.findIndex(s=>s.name===nameB)+1;
+  const liveA = Object.entries(part[nameA].teams).filter(([,t])=>t.alive).map(([t])=>t);
+  const liveB = Object.entries(part[nameB].teams).filter(([,t])=>t.alive).map(([t])=>t);
+  const row = (label, va, vb, better) => {
+    let aStyle="", bStyle="";
+    if (better === "a") aStyle="color:var(--good);font-weight:800";
+    if (better === "b") bStyle="color:var(--good);font-weight:800";
+    if (better === "tie") { aStyle=bStyle="color:var(--accent-2)"; }
+    return `<tr><td style="color:var(--muted)">${label}</td><td class="num" style="${aStyle}">${va}</td><td class="num" style="${bStyle}">${vb}</td></tr>`;
+  };
+  const better = (a,b,higher=true) => a===b?"tie":((higher?a>b:a<b)?"a":"b");
+  const htmlCmp = `
+    <div class="compare-grid">
+      <div class="compare-card">
+        <div class="name-chip">${avatar(nameA)}<strong style="font-size:16px">${esc(nameA)}</strong></div>
+        <div style="margin-top:8px;color:var(--muted);font-size:12px">#${rankA} overall</div>
+        <div class="pts" style="font-size:28px;margin-top:6px">${A.pts}</div>
+      </div>
+      <div class="compare-vs">VS</div>
+      <div class="compare-card">
+        <div class="name-chip">${avatar(nameB)}<strong style="font-size:16px">${esc(nameB)}</strong></div>
+        <div style="margin-top:8px;color:var(--muted);font-size:12px">#${rankB} overall</div>
+        <div class="pts" style="font-size:28px;margin-top:6px">${B.pts}</div>
+      </div>
+    </div>
+    <div class="table-wrap" style="margin-top:14px"><table>
+      <thead><tr><th>Stat</th><th class="num">${esc(nameA)}</th><th class="num">${esc(nameB)}</th></tr></thead>
+      <tbody>
+        ${row("Total points", A.pts, B.pts, better(A.pts,B.pts))}
+        ${row("Group points", A.gs, B.gs, better(A.gs,B.gs))}
+        ${row("Knockout points", A.ko, B.ko, better(A.ko,B.ko))}
+        ${row("Goals scored", A.gf, B.gf, better(A.gf,B.gf))}
+        ${row("Goals conceded", A.gc, B.gc, better(A.gc,B.gc,false))}
+        ${row("Goal difference", (A.gd>=0?"+":"")+A.gd, (B.gd>=0?"+":"")+B.gd, better(A.gd,B.gd))}
+        ${row("Teams still live", liveA.length, liveB.length, better(liveA.length,liveB.length))}
+        ${row("Mystic pick", A.mysticPick?flag(A.mysticPick)+esc(A.mysticPick):"—", B.mysticPick?flag(B.mysticPick)+esc(B.mysticPick):"—", "tie")}
+      </tbody>
+    </table></div>
+    <div class="help">Still live — ${esc(nameA)}: ${liveA.length?liveA.map(t=>flag(t)+esc(t)).join(" "):"none"} · ${esc(nameB)}: ${liveB.length?liveB.map(t=>flag(t)+esc(t)).join(" "):"none"}</div>`;
+  document.getElementById("compare-result").innerHTML = htmlCmp;
+}
+
 function openDossierUI(name){
   const {part, standings, champion}=compute();
   const s=standings.find(x=>x.name===name); if(!s) return;
@@ -1902,10 +2022,19 @@ const _sc=document.getElementById("share-close"); if(_sc) _sc.onclick=()=>docume
 const _modal=document.getElementById("modal"); if(_modal) _modal.onclick=(e)=>{ if(e.target.id==="modal") e.currentTarget.classList.remove("show"); };
 const _sm=document.getElementById("share-modal"); if(_sm) _sm.onclick=(e)=>{ if(e.target.id==="share-modal") e.currentTarget.classList.remove("show"); };
 const _copy=document.getElementById("btn-copy-share"); if(_copy) _copy.onclick=async()=>{ try{ await navigator.clipboard.writeText(document.getElementById("share-text").textContent); toast("Copied standings"); }catch{ toast("Copy failed", true);} };
-const _run=document.getElementById("btn-run-sim"); if(_run) _run.onclick=runSimUI;
-const _clr=document.getElementById("btn-clear-sim"); if(_clr) _clr.onclick=()=>{ const r=document.getElementById("sim-result"); if(r) r.innerHTML=""; renderSimControlsUI(); };
+const _cmp=document.getElementById("btn-run-compare"); if(_cmp) _cmp.onclick=runCompareUI;
+const _cmpa=document.getElementById("cmp-a"); if(_cmpa) _cmpa.onchange=()=>{};
+const _rng=document.getElementById("ticker-speed-range");
+if (_rng) {
+  _rng.value = String(tickerSpeedSec);
+  _rng.oninput = () => setTickerSpeed(_rng.value);
+}
+const _ts=document.getElementById("btn-ticker-slow"); if(_ts) _ts.onclick=()=>setTickerSpeed(tickerSpeedSec+10);
+const _td=document.getElementById("btn-ticker-default"); if(_td) _td.onclick=()=>setTickerSpeed(45);
+const _tf=document.getElementById("btn-ticker-fast"); if(_tf) _tf.onclick=()=>setTickerSpeed(tickerSpeedSec-10);
+applyTickerSpeed();
 renderAll();
 initFirebase();
 </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a1a295ce2c92dd0d',t:'MTc4Mzg4NTkxMw=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a1a2a79289acd4ed',t:'MTc4Mzg4NjY0MQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
