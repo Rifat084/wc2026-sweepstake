@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>WC 2026 Office Sweepstake — Live</title>
+<title>FIFA World Cup 2026 — Simply US Tax Sweepstake</title>
 <meta name="robots" content="noindex, nofollow" />
 <meta name="referrer" content="no-referrer" />
 <style>
@@ -201,13 +201,16 @@
   .locked-note { font-size: 11px; color: var(--muted); margin-top: 8px; }
   #admin-tab-btn { display: none; }
   #admin-tab-btn.show { display: inline-block; }
+  .mystic-pill { display:inline-block; padding:2px 8px; border-radius:10px; font-size:11px; font-weight:700; }
+  .mystic-pill.yes { background: rgba(46,204,113,0.2); color: var(--good); }
+  .mystic-pill.no { background: rgba(231,76,60,0.15); color: var(--bad); }
+  .mystic-pill.wait { background: rgba(243,156,18,0.15); color: var(--warn); }
 </style>
 </head>
 <body>
 <header>
   <div>
-    <h1>🏆 FIFA World Cup 2026 — Office Sweepstake</h1>
-    <div class="sub">Live shared standings · Email scoring · View-only for friends · Admin-only edits</div>
+    <h1>🏆 FIFA World Cup 2026 — Simply US Tax Sweepstake</h1>
   </div>
   <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
     <span class="badge off" id="sync-badge">Connecting…</span>
@@ -289,42 +292,47 @@
 
   <div class="panel-view" id="view-rules">
     <div class="card">
-      <h2>Scoring System (from group email)</h2>
-      <div class="rules-grid">
-        <div class="rule-box">
-          <h4>Group Stage</h4>
-          <div class="line"><span>Win</span><strong>2</strong></div>
-          <div class="line"><span>Draw</span><strong>1</strong></div>
-          <div class="line"><span>Loss</span><strong>0</strong></div>
-        </div>
-        <div class="rule-box">
-          <h4>Knockout Wins</h4>
-          <div class="line"><span>Round of 32</span><strong>4</strong></div>
-          <div class="line"><span>Round of 16</span><strong>6</strong></div>
-          <div class="line"><span>Quarter-final</span><strong>8</strong></div>
-          <div class="line"><span>Semi-final</span><strong>10</strong></div>
-          <div class="line"><span>3rd Place</span><strong>7</strong></div>
-          <div class="line"><span>Final</span><strong>15</strong></div>
-        </div>
-        <div class="rule-box">
-          <h4>Knockout Losses</h4>
-          <div class="line"><span>R32 / R16 / QF</span><strong>0</strong></div>
-          <div class="line"><span>Semi-final</span><strong>5</strong></div>
-          <div class="line"><span>Final</span><strong>8</strong></div>
-        </div>
-        <div class="rule-box">
-          <h4>Extras</h4>
-          <div class="line"><span>Mystic Bonus</span><strong>+10</strong></div>
-          <div class="line"><span>Status</span><strong style="color:var(--bad)">Not submitted</strong></div>
-          <div class="line"><span>Tiebreak 1</span><strong>Most GF</strong></div>
-          <div class="line"><span>Tiebreak 2</span><strong>Least GC</strong></div>
-          <div class="line"><span>Tiebreak 3</span><strong>Coin / RPS</strong></div>
-        </div>
-      </div>
+      <h2 id="rules-title">Scoring System</h2>
+      <div class="rules-grid" id="rules-display"></div>
       <div class="help" style="margin-top:14px">
-        Penalty shootouts: open-play goals (90 + AET) count toward GF/GC; the advancing team still gets knockout win points.<br>
-        This site is unlisted (no search indexing). Only people with your link can open it. Only the admin account can change scores.
+        Penalty shootouts: open-play goals (90 + AET) count toward GF/GC; the advancing team still gets knockout win points.
       </div>
+    </div>
+
+    <div class="card" id="rules-edit-card">
+      <h2>Edit scoring &amp; Mystic Bonus <span class="count" id="rules-edit-lock">Admin only</span></h2>
+      <div class="admin-box">
+        <h3>Point values</h3>
+        <div class="match-form" id="scoring-form">
+          <div><label>Group Win</label><input type="number" id="sc-gs-win" min="0" /></div>
+          <div><label>Group Draw</label><input type="number" id="sc-gs-draw" min="0" /></div>
+          <div><label>Group Loss</label><input type="number" id="sc-gs-loss" min="0" /></div>
+          <div><label>R32 Win</label><input type="number" id="sc-r32" min="0" /></div>
+          <div><label>R16 Win</label><input type="number" id="sc-r16" min="0" /></div>
+          <div><label>QF Win</label><input type="number" id="sc-qf" min="0" /></div>
+          <div><label>SF Win</label><input type="number" id="sc-sf-win" min="0" /></div>
+          <div><label>SF Loss</label><input type="number" id="sc-sf-loss" min="0" /></div>
+          <div><label>3rd Place Win</label><input type="number" id="sc-3rd" min="0" /></div>
+          <div><label>Final Win</label><input type="number" id="sc-f-win" min="0" /></div>
+          <div><label>Final Loss</label><input type="number" id="sc-f-loss" min="0" /></div>
+          <div><label>Mystic Bonus points</label><input type="number" id="sc-mystic-pts" min="0" /></div>
+        </div>
+      </div>
+
+      <div class="admin-box" style="margin-top:12px">
+        <h3>Mystic Bonus — predicted World Cup winner (one team each)</h3>
+        <div class="help" style="margin-top:0;margin-bottom:8px">
+          Each person picks one team. If that team wins the Final, they get the Mystic Bonus points.
+          Leave as “— none —” if they did not submit a pick.
+        </div>
+        <div id="mystic-picks-form" class="match-form"></div>
+      </div>
+
+      <div class="footer-actions">
+        <button class="btn-primary" id="btn-save-rules" disabled>Save scoring &amp; mystic (live)</button>
+        <button class="btn-secondary" id="btn-reset-rules" disabled>Reset form to current</button>
+      </div>
+      <div class="locked-note" id="rules-save-note">Sign in as admin to edit scoring and mystic picks.</div>
     </div>
   </div>
 
@@ -451,14 +459,29 @@ const SHOW_ADMIN_TAB_TO_EVERYONE = true;
 const SEED = {"rosters":{"Jabed":["Brazil","Morocco","Japan","Ecuador","Algeria","Paraguay","Uzbekistan","Curaçao"],"Rachel":["Spain","Belgium","Mexico","Austria","Egypt","Scotland","Qatar","Ghana"],"Aminah":["Portugal","Netherlands","Senegal","Iran","Panama","Czechia","South Africa","Haiti"],"Saira":["England","Colombia","Switzerland","Türkiye","Norway","Sweden","Jordan","New Zealand"],"Troy":["France","Germany","USA","Australia","Canada","DR Congo","Saudi Arabia","Bosnia & Herzegovina"],"Rifat":["Argentina","Croatia","Uruguay","South Korea","Côte d'Ivoire","Tunisia","Iraq","Cape Verde"]},"matches":[{"date":"Jun 11","stage":"GS","group":"A","teamA":"Mexico","scoreA":2,"scoreB":0,"teamB":"South Africa","winner":"Mexico","note":""},{"date":"Jun 12","stage":"GS","group":"A","teamA":"South Korea","scoreA":2,"scoreB":1,"teamB":"Czechia","winner":"South Korea","note":""},{"date":"Jun 12","stage":"GS","group":"B","teamA":"Canada","scoreA":1,"scoreB":1,"teamB":"Bosnia & Herzegovina","winner":null,"note":""},{"date":"Jun 13","stage":"GS","group":"B","teamA":"Qatar","scoreA":1,"scoreB":1,"teamB":"Switzerland","winner":null,"note":""},{"date":"Jun 13","stage":"GS","group":"C","teamA":"Brazil","scoreA":1,"scoreB":1,"teamB":"Morocco","winner":null,"note":""},{"date":"Jun 13","stage":"GS","group":"D","teamA":"USA","scoreA":4,"scoreB":1,"teamB":"Paraguay","winner":"USA","note":""},{"date":"Jun 14","stage":"GS","group":"C","teamA":"Haiti","scoreA":0,"scoreB":1,"teamB":"Scotland","winner":"Scotland","note":""},{"date":"Jun 14","stage":"GS","group":"D","teamA":"Australia","scoreA":2,"scoreB":0,"teamB":"Türkiye","winner":"Australia","note":""},{"date":"Jun 14","stage":"GS","group":"E","teamA":"Germany","scoreA":7,"scoreB":1,"teamB":"Curaçao","winner":"Germany","note":""},{"date":"Jun 14","stage":"GS","group":"F","teamA":"Netherlands","scoreA":2,"scoreB":2,"teamB":"Japan","winner":null,"note":""},{"date":"Jun 15","stage":"GS","group":"E","teamA":"Côte d'Ivoire","scoreA":1,"scoreB":0,"teamB":"Ecuador","winner":"Côte d'Ivoire","note":""},{"date":"Jun 15","stage":"GS","group":"F","teamA":"Sweden","scoreA":5,"scoreB":1,"teamB":"Tunisia","winner":"Sweden","note":""},{"date":"Jun 15","stage":"GS","group":"G","teamA":"Belgium","scoreA":1,"scoreB":1,"teamB":"Egypt","winner":null,"note":""},{"date":"Jun 15","stage":"GS","group":"H","teamA":"Spain","scoreA":0,"scoreB":0,"teamB":"Cape Verde","winner":null,"note":""},{"date":"Jun 16","stage":"GS","group":"G","teamA":"Iran","scoreA":2,"scoreB":2,"teamB":"New Zealand","winner":null,"note":""},{"date":"Jun 16","stage":"GS","group":"H","teamA":"Saudi Arabia","scoreA":1,"scoreB":1,"teamB":"Uruguay","winner":null,"note":""},{"date":"Jun 16","stage":"GS","group":"I","teamA":"France","scoreA":3,"scoreB":1,"teamB":"Senegal","winner":"France","note":""},{"date":"Jun 16","stage":"GS","group":"I","teamA":"Iraq","scoreA":1,"scoreB":4,"teamB":"Norway","winner":"Norway","note":""},{"date":"Jun 17","stage":"GS","group":"J","teamA":"Argentina","scoreA":3,"scoreB":0,"teamB":"Algeria","winner":"Argentina","note":""},{"date":"Jun 17","stage":"GS","group":"J","teamA":"Austria","scoreA":3,"scoreB":1,"teamB":"Jordan","winner":"Austria","note":""},{"date":"Jun 17","stage":"GS","group":"K","teamA":"Portugal","scoreA":1,"scoreB":1,"teamB":"DR Congo","winner":null,"note":""},{"date":"Jun 17","stage":"GS","group":"L","teamA":"England","scoreA":4,"scoreB":2,"teamB":"Croatia","winner":"England","note":""},{"date":"Jun 17","stage":"GS","group":"L","teamA":"Ghana","scoreA":1,"scoreB":0,"teamB":"Panama","winner":"Ghana","note":""},{"date":"Jun 18","stage":"GS","group":"K","teamA":"Colombia","scoreA":3,"scoreB":1,"teamB":"Uzbekistan","winner":"Colombia","note":""},{"date":"Jun 18","stage":"GS","group":"A","teamA":"Czechia","scoreA":1,"scoreB":1,"teamB":"South Africa","winner":null,"note":""},{"date":"Jun 18","stage":"GS","group":"B","teamA":"Switzerland","scoreA":4,"scoreB":1,"teamB":"Bosnia & Herzegovina","winner":"Switzerland","note":""},{"date":"Jun 18","stage":"GS","group":"B","teamA":"Canada","scoreA":6,"scoreB":0,"teamB":"Qatar","winner":"Canada","note":""},{"date":"Jun 18","stage":"GS","group":"A","teamA":"Mexico","scoreA":1,"scoreB":0,"teamB":"South Korea","winner":"Mexico","note":""},{"date":"Jun 19","stage":"GS","group":"D","teamA":"USA","scoreA":2,"scoreB":0,"teamB":"Australia","winner":"USA","note":""},{"date":"Jun 19","stage":"GS","group":"C","teamA":"Scotland","scoreA":0,"scoreB":1,"teamB":"Morocco","winner":"Morocco","note":""},{"date":"Jun 19","stage":"GS","group":"C","teamA":"Brazil","scoreA":3,"scoreB":0,"teamB":"Haiti","winner":"Brazil","note":""},{"date":"Jun 20","stage":"GS","group":"D","teamA":"Türkiye","scoreA":0,"scoreB":1,"teamB":"Paraguay","winner":"Paraguay","note":""},{"date":"Jun 20","stage":"GS","group":"F","teamA":"Netherlands","scoreA":5,"scoreB":1,"teamB":"Sweden","winner":"Netherlands","note":""},{"date":"Jun 20","stage":"GS","group":"E","teamA":"Germany","scoreA":2,"scoreB":1,"teamB":"Côte d'Ivoire","winner":"Germany","note":""},{"date":"Jun 20","stage":"GS","group":"E","teamA":"Ecuador","scoreA":0,"scoreB":0,"teamB":"Curaçao","winner":null,"note":""},{"date":"Jun 21","stage":"GS","group":"F","teamA":"Tunisia","scoreA":0,"scoreB":4,"teamB":"Japan","winner":"Japan","note":""},{"date":"Jun 21","stage":"GS","group":"H","teamA":"Spain","scoreA":4,"scoreB":0,"teamB":"Saudi Arabia","winner":"Spain","note":""},{"date":"Jun 21","stage":"GS","group":"G","teamA":"Belgium","scoreA":0,"scoreB":0,"teamB":"Iran","winner":null,"note":""},{"date":"Jun 21","stage":"GS","group":"H","teamA":"Uruguay","scoreA":2,"scoreB":2,"teamB":"Cape Verde","winner":null,"note":""},{"date":"Jun 22","stage":"GS","group":"G","teamA":"New Zealand","scoreA":1,"scoreB":3,"teamB":"Egypt","winner":"Egypt","note":""},{"date":"Jun 22","stage":"GS","group":"J","teamA":"Argentina","scoreA":2,"scoreB":0,"teamB":"Austria","winner":"Argentina","note":""},{"date":"Jun 22","stage":"GS","group":"I","teamA":"France","scoreA":3,"scoreB":0,"teamB":"Iraq","winner":"France","note":""},{"date":"Jun 22","stage":"GS","group":"I","teamA":"Norway","scoreA":3,"scoreB":2,"teamB":"Senegal","winner":"Norway","note":""},{"date":"Jun 22","stage":"GS","group":"J","teamA":"Jordan","scoreA":1,"scoreB":2,"teamB":"Algeria","winner":"Algeria","note":""},{"date":"Jun 23","stage":"GS","group":"K","teamA":"Portugal","scoreA":5,"scoreB":0,"teamB":"Uzbekistan","winner":"Portugal","note":""},{"date":"Jun 23","stage":"GS","group":"L","teamA":"England","scoreA":0,"scoreB":0,"teamB":"Ghana","winner":null,"note":""},{"date":"Jun 23","stage":"GS","group":"L","teamA":"Croatia","scoreA":1,"scoreB":0,"teamB":"Panama","winner":"Croatia","note":""},{"date":"Jun 23","stage":"GS","group":"K","teamA":"Colombia","scoreA":1,"scoreB":0,"teamB":"DR Congo","winner":"Colombia","note":""},{"date":"Jun 24","stage":"GS","group":"B","teamA":"Bosnia & Herzegovina","scoreA":3,"scoreB":1,"teamB":"Qatar","winner":"Bosnia & Herzegovina","note":""},{"date":"Jun 24","stage":"GS","group":"B","teamA":"Switzerland","scoreA":2,"scoreB":1,"teamB":"Canada","winner":"Switzerland","note":""},{"date":"Jun 24","stage":"GS","group":"C","teamA":"Morocco","scoreA":4,"scoreB":2,"teamB":"Haiti","winner":"Morocco","note":""},{"date":"Jun 24","stage":"GS","group":"C","teamA":"Scotland","scoreA":0,"scoreB":3,"teamB":"Brazil","winner":"Brazil","note":""},{"date":"Jun 25","stage":"GS","group":"A","teamA":"South Africa","scoreA":1,"scoreB":0,"teamB":"South Korea","winner":"South Africa","note":""},{"date":"Jun 25","stage":"GS","group":"A","teamA":"Czechia","scoreA":0,"scoreB":3,"teamB":"Mexico","winner":"Mexico","note":""},{"date":"Jun 25","stage":"GS","group":"E","teamA":"Curaçao","scoreA":0,"scoreB":2,"teamB":"Côte d'Ivoire","winner":"Côte d'Ivoire","note":""},{"date":"Jun 25","stage":"GS","group":"E","teamA":"Ecuador","scoreA":2,"scoreB":1,"teamB":"Germany","winner":"Ecuador","note":""},{"date":"Jun 25","stage":"GS","group":"F","teamA":"Japan","scoreA":1,"scoreB":1,"teamB":"Sweden","winner":null,"note":""},{"date":"Jun 25","stage":"GS","group":"F","teamA":"Tunisia","scoreA":1,"scoreB":3,"teamB":"Netherlands","winner":"Netherlands","note":""},{"date":"Jun 25","stage":"GS","group":"D","teamA":"Türkiye","scoreA":3,"scoreB":2,"teamB":"USA","winner":"Türkiye","note":""},{"date":"Jun 25","stage":"GS","group":"D","teamA":"Paraguay","scoreA":0,"scoreB":0,"teamB":"Australia","winner":null,"note":""},{"date":"Jun 26","stage":"GS","group":"I","teamA":"Norway","scoreA":1,"scoreB":4,"teamB":"France","winner":"France","note":""},{"date":"Jun 26","stage":"GS","group":"I","teamA":"Senegal","scoreA":5,"scoreB":0,"teamB":"Iraq","winner":"Senegal","note":""},{"date":"Jun 26","stage":"GS","group":"H","teamA":"Cape Verde","scoreA":0,"scoreB":0,"teamB":"Saudi Arabia","winner":null,"note":""},{"date":"Jun 26","stage":"GS","group":"H","teamA":"Uruguay","scoreA":0,"scoreB":1,"teamB":"Spain","winner":"Spain","note":""},{"date":"Jun 26","stage":"GS","group":"G","teamA":"New Zealand","scoreA":1,"scoreB":5,"teamB":"Belgium","winner":"Belgium","note":""},{"date":"Jun 26","stage":"GS","group":"G","teamA":"Egypt","scoreA":1,"scoreB":1,"teamB":"Iran","winner":null,"note":""},{"date":"Jun 27","stage":"GS","group":"L","teamA":"Panama","scoreA":0,"scoreB":2,"teamB":"England","winner":"England","note":""},{"date":"Jun 27","stage":"GS","group":"L","teamA":"Croatia","scoreA":2,"scoreB":1,"teamB":"Ghana","winner":"Croatia","note":""},{"date":"Jun 27","stage":"GS","group":"K","teamA":"Colombia","scoreA":0,"scoreB":0,"teamB":"Portugal","winner":null,"note":""},{"date":"Jun 27","stage":"GS","group":"K","teamA":"DR Congo","scoreA":3,"scoreB":1,"teamB":"Uzbekistan","winner":"DR Congo","note":""},{"date":"Jun 27","stage":"GS","group":"J","teamA":"Algeria","scoreA":3,"scoreB":3,"teamB":"Austria","winner":null,"note":""},{"date":"Jun 27","stage":"GS","group":"J","teamA":"Jordan","scoreA":1,"scoreB":3,"teamB":"Argentina","winner":"Argentina","note":""},{"date":"Jun 28","stage":"R32","group":"","teamA":"South Africa","scoreA":0,"scoreB":1,"teamB":"Canada","winner":"Canada","note":""},{"date":"Jun 29","stage":"R32","group":"","teamA":"Brazil","scoreA":2,"scoreB":1,"teamB":"Japan","winner":"Brazil","note":""},{"date":"Jun 29","stage":"R32","group":"","teamA":"Germany","scoreA":1,"scoreB":1,"teamB":"Paraguay","winner":"Paraguay","note":"pens 3-4"},{"date":"Jun 29","stage":"R32","group":"","teamA":"Netherlands","scoreA":1,"scoreB":1,"teamB":"Morocco","winner":"Morocco","note":"pens 2-3"},{"date":"Jun 30","stage":"R32","group":"","teamA":"Côte d'Ivoire","scoreA":1,"scoreB":2,"teamB":"Norway","winner":"Norway","note":""},{"date":"Jun 30","stage":"R32","group":"","teamA":"France","scoreA":3,"scoreB":0,"teamB":"Sweden","winner":"France","note":""},{"date":"Jun 30","stage":"R32","group":"","teamA":"Mexico","scoreA":2,"scoreB":0,"teamB":"Ecuador","winner":"Mexico","note":""},{"date":"Jul 01","stage":"R32","group":"","teamA":"England","scoreA":2,"scoreB":1,"teamB":"DR Congo","winner":"England","note":""},{"date":"Jul 01","stage":"R32","group":"","teamA":"Belgium","scoreA":3,"scoreB":2,"teamB":"Senegal","winner":"Belgium","note":"AET"},{"date":"Jul 01","stage":"R32","group":"","teamA":"USA","scoreA":2,"scoreB":0,"teamB":"Bosnia & Herzegovina","winner":"USA","note":""},{"date":"Jul 02","stage":"R32","group":"","teamA":"Spain","scoreA":3,"scoreB":0,"teamB":"Austria","winner":"Spain","note":""},{"date":"Jul 02","stage":"R32","group":"","teamA":"Portugal","scoreA":2,"scoreB":1,"teamB":"Croatia","winner":"Portugal","note":""},{"date":"Jul 02","stage":"R32","group":"","teamA":"Switzerland","scoreA":2,"scoreB":0,"teamB":"Algeria","winner":"Switzerland","note":""},{"date":"Jul 03","stage":"R32","group":"","teamA":"Australia","scoreA":1,"scoreB":1,"teamB":"Egypt","winner":"Egypt","note":"pens 2-4"},{"date":"Jul 03","stage":"R32","group":"","teamA":"Argentina","scoreA":3,"scoreB":2,"teamB":"Cape Verde","winner":"Argentina","note":"AET"},{"date":"Jul 03","stage":"R32","group":"","teamA":"Colombia","scoreA":1,"scoreB":0,"teamB":"Ghana","winner":"Colombia","note":""},{"date":"Jul 04","stage":"R16","group":"","teamA":"Canada","scoreA":0,"scoreB":3,"teamB":"Morocco","winner":"Morocco","note":""},{"date":"Jul 04","stage":"R16","group":"","teamA":"France","scoreA":1,"scoreB":0,"teamB":"Paraguay","winner":"France","note":""},{"date":"Jul 05","stage":"R16","group":"","teamA":"Brazil","scoreA":1,"scoreB":2,"teamB":"Norway","winner":"Norway","note":""},{"date":"Jul 05","stage":"R16","group":"","teamA":"Mexico","scoreA":2,"scoreB":3,"teamB":"England","winner":"England","note":""},{"date":"Jul 06","stage":"R16","group":"","teamA":"Portugal","scoreA":0,"scoreB":1,"teamB":"Spain","winner":"Spain","note":""},{"date":"Jul 06","stage":"R16","group":"","teamA":"USA","scoreA":1,"scoreB":4,"teamB":"Belgium","winner":"Belgium","note":""},{"date":"Jul 07","stage":"R16","group":"","teamA":"Argentina","scoreA":3,"scoreB":2,"teamB":"Egypt","winner":"Argentina","note":""},{"date":"Jul 07","stage":"R16","group":"","teamA":"Switzerland","scoreA":0,"scoreB":0,"teamB":"Colombia","winner":"Switzerland","note":"pens 4-3"},{"date":"Jul 09","stage":"QF","group":"","teamA":"France","scoreA":2,"scoreB":0,"teamB":"Morocco","winner":"France","note":""},{"date":"Jul 10","stage":"QF","group":"","teamA":"Spain","scoreA":2,"scoreB":1,"teamB":"Belgium","winner":"Spain","note":""},{"date":"Jul 11","stage":"QF","group":"","teamA":"Norway","scoreA":1,"scoreB":2,"teamB":"England","winner":"England","note":"AET"},{"date":"Jul 11","stage":"QF","group":"","teamA":"Argentina","scoreA":3,"scoreB":1,"teamB":"Switzerland","winner":"Argentina","note":"AET"}],"standings":[{"name":"Saira","pts":67,"gf":58,"gc":57,"gs":25,"ko":42},{"name":"Rachel","pts":64,"gf":54,"gc":44,"gs":28,"ko":36},{"name":"Troy","pts":54,"gf":61,"gc":42,"gs":28,"ko":26},{"name":"Jabed","pts":42,"gf":41,"gc":54,"gs":24,"ko":18},{"name":"Rifat","pts":39,"gf":40,"gc":53,"gs":21,"ko":18},{"name":"Aminah","pts":22,"gf":38,"gc":42,"gs":18,"ko":4}]};
 
 const DOC_PATH = { col: "wc2026", id: "live" };
-const KO_WIN = { R32: 4, R16: 6, QF: 8, SF: 10, "3RD": 7, F: 15 };
-const KO_LOSS = { SF: 5, F: 8 };
+
+function defaultScoring() {
+  return {
+    gsWin: 2, gsDraw: 1, gsLoss: 0,
+    r32: 4, r16: 6, qf: 8,
+    sfWin: 10, sfLoss: 5,
+    third: 7,
+    fWin: 15, fLoss: 8,
+    mysticBonus: 10
+  };
+}
+function defaultMystic() {
+  const picks = {};
+  for (const name of Object.keys(SEED.rosters)) picks[name] = null;
+  return { picks };
+}
 
 const OWNER = {};
 for (const [name, teams] of Object.entries(SEED.rosters)) {
   for (const team of teams) OWNER[team] = name;
 }
 const ALL_TEAMS = Object.keys(OWNER).sort((a, b) => a.localeCompare(b));
+const PARTICIPANTS = Object.keys(SEED.rosters);
 
 function isConfigReady() {
   return FIREBASE_CONFIG.apiKey && !FIREBASE_CONFIG.apiKey.startsWith("PASTE_");
@@ -466,6 +489,8 @@ function isConfigReady() {
 
 // Local UI state
 let matches = SEED.matches.map((m, i) => ({ ...m, id: "seed_" + i }));
+let scoring = defaultScoring();
+let mystic = defaultMystic();
 let cloudReady = false;
 let isAdmin = false;
 let unsub = null;
@@ -487,7 +512,30 @@ function esc(s) {
   return String(s).replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;" }[c]));
 }
 function gdClass(gd) { return gd > 0 ? "gd-pos" : (gd < 0 ? "gd-neg" : ""); }
-function gsPts(gf, ga) { return gf > ga ? 2 : (gf < ga ? 0 : 1); }
+function gsPts(gf, ga) {
+  if (gf > ga) return scoring.gsWin;
+  if (gf < ga) return scoring.gsLoss;
+  return scoring.gsDraw;
+}
+function koWinPts(stage) {
+  if (stage === "R32") return scoring.r32;
+  if (stage === "R16") return scoring.r16;
+  if (stage === "QF") return scoring.qf;
+  if (stage === "SF") return scoring.sfWin;
+  if (stage === "3RD") return scoring.third;
+  if (stage === "F") return scoring.fWin;
+  return 0;
+}
+function koLossPts(stage) {
+  if (stage === "SF") return scoring.sfLoss;
+  if (stage === "F") return scoring.fLoss;
+  return 0;
+}
+function findChampion() {
+  const finals = matches.filter(m => m.stage === "F" && resolveWinner(m));
+  if (!finals.length) return null;
+  return resolveWinner(finals[finals.length - 1]);
+}
 function resolveWinner(m) {
   if (m.winner) return m.winner;
   if (m.scoreA > m.scoreB) return m.teamA;
@@ -515,8 +563,8 @@ function compute() {
       noteB = sb > sa ? "WIN" : (sb < sa ? "LOSS" : "DRAW");
     } else {
       const winner = resolveWinner(m);
-      const winPts = KO_WIN[stage] || 0;
-      const lossPts = KO_LOSS[stage] || 0;
+      const winPts = koWinPts(stage);
+      const lossPts = koLossPts(stage);
       if (winner) {
         if (a === winner) { ptsA = winPts; ptsB = lossPts; noteA = "WIN"; noteB = "LOSS"; }
         else { ptsB = winPts; ptsA = lossPts; noteA = "LOSS"; noteB = "WIN"; }
@@ -557,10 +605,24 @@ function compute() {
       t.alive = playedKO && (!lostKO || wonFinal);
     }
   }
+  // Mystic Bonus: +N if pick equals World Cup champion (Final winner)
+  const champion = findChampion();
+  for (const name of Object.keys(part)) {
+    const pick = mystic.picks?.[name] || null;
+    part[name].mysticPick = pick;
+    part[name].mysticPts = 0;
+    part[name].mysticHit = false;
+    if (champion && pick && pick === champion) {
+      part[name].mysticPts = scoring.mysticBonus || 0;
+      part[name].mysticHit = true;
+      part[name].pts += part[name].mysticPts;
+    }
+  }
+
   const standings = Object.keys(part).map(name => ({
     name, ...part[name], gd: part[name].gf - part[name].gc
   })).sort((a, b) => b.pts - a.pts || b.gf - a.gf || a.gc - b.gc || a.name.localeCompare(b.name));
-  return { part, standings, matchAlloc };
+  return { part, standings, matchAlloc, champion };
 }
 
 // ---------- render ----------
@@ -588,6 +650,20 @@ function setBadges() {
   const autoBtn = document.getElementById("btn-auto-sync");
   if (syncBtn) syncBtn.disabled = !canEdit;
   if (autoBtn) autoBtn.disabled = !canEdit;
+  const saveRulesBtn = document.getElementById("btn-save-rules");
+  const resetRulesBtn = document.getElementById("btn-reset-rules");
+  if (saveRulesBtn) saveRulesBtn.disabled = !canEdit;
+  if (resetRulesBtn) resetRulesBtn.disabled = !canEdit;
+  const lock = document.getElementById("rules-edit-lock");
+  if (lock) lock.textContent = canEdit ? "Editable" : "Admin only";
+  const rnote = document.getElementById("rules-save-note");
+  if (rnote) rnote.textContent = canEdit
+    ? "Changes save to the cloud and update everyone's points instantly."
+    : "Sign in as admin to edit scoring and mystic picks.";
+  // enable/disable scoring inputs
+  document.querySelectorAll("#scoring-form input, #mystic-picks-form select").forEach(el => {
+    el.disabled = !canEdit;
+  });
   if (!isAdmin && autoSyncOn) setAutoSync(false);
   document.getElementById("edit-lock-note").textContent = canEdit
     ? "Editing unlocked — saves go live for everyone."
@@ -615,7 +691,7 @@ function setBadges() {
 }
 
 function renderAll() {
-  const { part, standings, matchAlloc } = compute();
+  const { part, standings, matchAlloc, champion } = compute();
   setBadges();
   renderPodium(standings);
   renderStandings(standings, part);
@@ -625,6 +701,156 @@ function renderAll() {
   renderAddForm();
   renderUpcoming();
   renderSfBanner(standings, part);
+  renderRules(part, champion);
+}
+
+
+function mysticStatusLabel(partRow, champion) {
+  const pick = partRow.mysticPick;
+  if (!pick) return '<span class="mystic-pill no">No pick</span>';
+  if (!champion) return '<span class="mystic-pill wait">Picked ' + esc(pick) + '</span>';
+  if (partRow.mysticHit) return '<span class="mystic-pill yes">+' + partRow.mysticPts + ' (' + esc(pick) + ')</span>';
+  return '<span class="mystic-pill no">' + esc(pick) + ' (miss)</span>';
+}
+
+function renderRules(part, champion) {
+  const el = document.getElementById("rules-display");
+  if (!el) return;
+  const s = scoring;
+  const champLabel = champion ? esc(champion) : "TBD (after Final)";
+  el.innerHTML = `
+    <div class="rule-box">
+      <h4>Group Stage</h4>
+      <div class="line"><span>Win</span><strong>${s.gsWin}</strong></div>
+      <div class="line"><span>Draw</span><strong>${s.gsDraw}</strong></div>
+      <div class="line"><span>Loss</span><strong>${s.gsLoss}</strong></div>
+    </div>
+    <div class="rule-box">
+      <h4>Knockout Wins</h4>
+      <div class="line"><span>Round of 32</span><strong>${s.r32}</strong></div>
+      <div class="line"><span>Round of 16</span><strong>${s.r16}</strong></div>
+      <div class="line"><span>Quarter-final</span><strong>${s.qf}</strong></div>
+      <div class="line"><span>Semi-final</span><strong>${s.sfWin}</strong></div>
+      <div class="line"><span>3rd Place</span><strong>${s.third}</strong></div>
+      <div class="line"><span>Final</span><strong>${s.fWin}</strong></div>
+    </div>
+    <div class="rule-box">
+      <h4>Knockout Losses</h4>
+      <div class="line"><span>R32 / R16 / QF</span><strong>0</strong></div>
+      <div class="line"><span>Semi-final</span><strong>${s.sfLoss}</strong></div>
+      <div class="line"><span>Final</span><strong>${s.fLoss}</strong></div>
+    </div>
+    <div class="rule-box">
+      <h4>Mystic Bonus</h4>
+      <div class="line"><span>Bonus if pick wins WC</span><strong>+${s.mysticBonus}</strong></div>
+      <div class="line"><span>Champion</span><strong>${champLabel}</strong></div>
+      <div class="line"><span>Tiebreak 1</span><strong>Most GF</strong></div>
+      <div class="line"><span>Tiebreak 2</span><strong>Least GC</strong></div>
+      <div class="line"><span>Tiebreak 3</span><strong>Coin / RPS</strong></div>
+    </div>
+  `;
+
+  // Picks summary under extras - append participant picks card
+  const picksHtml = PARTICIPANTS.map(name => {
+    const row = part[name] || { mysticPick: mystic.picks?.[name] || null, mysticPts: 0, mysticHit: false };
+    return `<div class="line"><span>${esc(name)}</span><span>${mysticStatusLabel(row, champion)}</span></div>`;
+  }).join("");
+  el.innerHTML += `<div class="rule-box" style="grid-column:1/-1"><h4>Mystic picks</h4>${picksHtml}</div>`;
+
+  fillRulesForm();
+}
+
+function fillRulesForm() {
+  const map = {
+    "sc-gs-win": scoring.gsWin,
+    "sc-gs-draw": scoring.gsDraw,
+    "sc-gs-loss": scoring.gsLoss,
+    "sc-r32": scoring.r32,
+    "sc-r16": scoring.r16,
+    "sc-qf": scoring.qf,
+    "sc-sf-win": scoring.sfWin,
+    "sc-sf-loss": scoring.sfLoss,
+    "sc-3rd": scoring.third,
+    "sc-f-win": scoring.fWin,
+    "sc-f-loss": scoring.fLoss,
+    "sc-mystic-pts": scoring.mysticBonus
+  };
+  for (const [id, val] of Object.entries(map)) {
+    const el = document.getElementById(id);
+    if (el && document.activeElement !== el) el.value = val;
+  }
+
+  const form = document.getElementById("mystic-picks-form");
+  if (!form) return;
+  const teamOpts = ['<option value="">— none —</option>']
+    .concat(ALL_TEAMS.map(t => `<option value="${esc(t)}">${esc(t)}</option>`)).join("");
+  // rebuild only if empty or participant count mismatch
+  if (!form.dataset.ready) {
+    form.innerHTML = PARTICIPANTS.map(name => `
+      <div>
+        <label>${esc(name)} predicted winner</label>
+        <select id="mystic-pick-${esc(name)}" data-participant="${esc(name)}">${teamOpts}</select>
+      </div>`).join("");
+    form.dataset.ready = "1";
+  }
+  for (const name of PARTICIPANTS) {
+    const sel = document.getElementById("mystic-pick-" + name);
+    if (!sel) continue;
+    const v = mystic.picks?.[name] || "";
+    if (document.activeElement !== sel) sel.value = v;
+  }
+}
+
+function readRulesForm() {
+  const num = (id) => {
+    const v = parseInt(document.getElementById(id).value, 10);
+    return Number.isNaN(v) ? 0 : Math.max(0, v);
+  };
+  const nextScoring = {
+    gsWin: num("sc-gs-win"),
+    gsDraw: num("sc-gs-draw"),
+    gsLoss: num("sc-gs-loss"),
+    r32: num("sc-r32"),
+    r16: num("sc-r16"),
+    qf: num("sc-qf"),
+    sfWin: num("sc-sf-win"),
+    sfLoss: num("sc-sf-loss"),
+    third: num("sc-3rd"),
+    fWin: num("sc-f-win"),
+    fLoss: num("sc-f-loss"),
+    mysticBonus: num("sc-mystic-pts")
+  };
+  const picks = {};
+  for (const name of PARTICIPANTS) {
+    const sel = document.getElementById("mystic-pick-" + name);
+    const v = sel ? sel.value : "";
+    picks[name] = v || null;
+  }
+  return { scoring: nextScoring, mystic: { picks } };
+}
+
+async function saveRulesAndMystic() {
+  if (!isAdmin || !cloudReady) { toast("Admin + cloud required", true); return; }
+  if (!db || !window.__fb || !auth.currentUser) { toast("Firebase not ready", true); return; }
+  const { scoring: nextS, mystic: nextM } = readRulesForm();
+  try {
+    const { doc, setDoc, serverTimestamp } = window.__fb;
+    const ref = doc(db, DOC_PATH.col, DOC_PATH.id);
+    await setDoc(ref, {
+      scoring: nextS,
+      mystic: nextM,
+      updatedAt: serverTimestamp(),
+      updatedAtClient: new Date().toISOString(),
+      updatedBy: auth.currentUser.email || "admin"
+    }, { merge: true });
+    // local apply immediately; snapshot will confirm
+    scoring = nextS;
+    mystic = nextM;
+    renderAll();
+    toast("Scoring & mystic saved for everyone");
+  } catch (e) {
+    toast(e.message || "Save failed", true);
+  }
 }
 
 function renderSfBanner(standings, part) {
@@ -642,7 +868,7 @@ function renderSfBanner(standings, part) {
   el.innerHTML = "<strong>Still live:</strong> " + alive.map(a =>
     esc(a.team) + " <span style=\"color:var(--muted)\">(" + esc(a.owner) + ")</span>"
   ).join(" · ") +
-  "<div style=\"margin-top:6px;font-size:11px;color:var(--muted)\">SF win +10 / loss +5 · 3rd +7 · Final win +15 / loss +8</div>";
+  `<div style="margin-top:6px;font-size:11px;color:var(--muted)">SF win +${scoring.sfWin} / loss +${scoring.sfLoss} · 3rd +${scoring.third} · Final win +${scoring.fWin} / loss +${scoring.fLoss}</div>`;
 }
 
 function renderPodium(standings) {
@@ -660,6 +886,7 @@ function renderStandings(standings, part) {
   document.getElementById("standings-body").innerHTML = standings.map((s, i) => {
     const rankCls = i === 0 ? "gold" : i === 1 ? "silver" : i === 2 ? "bronze" : "";
     const live = Object.entries(part[s.name].teams).filter(([, t]) => t.alive).map(([team]) => team);
+    const myst = s.mysticHit ? `+${s.mysticPts}` : (s.mysticPick ? esc(s.mysticPick) : "—");
     return `<tr>
       <td><span class="rank ${rankCls}">${i+1}</span></td>
       <td><strong>${esc(s.name)}</strong></td>
@@ -667,6 +894,7 @@ function renderStandings(standings, part) {
       <td class="num">${s.gs}</td><td class="num">${s.ko}</td>
       <td class="num">${s.gf}</td><td class="num">${s.gc}</td>
       <td class="num ${gdClass(s.gd)}">${s.gd >= 0 ? "+" : ""}${s.gd}</td>
+      <td class="num" style="font-size:11px">${myst}</td>
       <td style="font-size:12px;color:var(--good)">${live.length ? live.map(esc).join(", ") : "<span style='color:var(--muted)'>—</span>"}</td>
     </tr>`;
   }).join("");
@@ -1171,9 +1399,20 @@ async function initFirebase() {
           cloudReady = true;
           lastUpdated = data.updatedAt?.toDate?.()?.toISOString?.() || data.updatedAtClient || null;
         }
+        if (data.scoring && typeof data.scoring === "object") {
+          scoring = { ...defaultScoring(), ...data.scoring };
+        }
+        if (data.mystic && typeof data.mystic === "object") {
+          const base = defaultMystic();
+          mystic = {
+            picks: { ...base.picks, ...(data.mystic.picks || {}) }
+          };
+        }
       } else {
         cloudReady = false;
         matches = SEED.matches.map((m, i) => ({ ...m, id: "seed_" + i }));
+        scoring = defaultScoring();
+        mystic = defaultMystic();
       }
       renderAll();
     }, (err) => {
@@ -1214,7 +1453,16 @@ async function initCloudFromSeed() {
       teamA: m.teamA, scoreA: m.scoreA, scoreB: m.scoreB, teamB: m.teamB,
       winner: m.winner, note: m.note || ""
     }));
-    await saveMatches(seeded);
+    const { doc, setDoc, serverTimestamp } = window.__fb;
+    const ref = doc(db, DOC_PATH.col, DOC_PATH.id);
+    await setDoc(ref, {
+      matches: seeded,
+      scoring: defaultScoring(),
+      mystic: defaultMystic(),
+      updatedAt: serverTimestamp(),
+      updatedAtClient: new Date().toISOString(),
+      updatedBy: auth.currentUser.email || "admin"
+    }, { merge: true });
     toast("Cloud initialized — everyone is now live");
   } catch (e) {
     toast(e.message || "Init failed", true);
@@ -1291,6 +1539,8 @@ document.getElementById("btn-auto-sync").onclick = () => {
   toast(autoSyncOn ? "Auto-sync ON (every 3 min)" : "Auto-sync OFF");
 };
 document.getElementById("btn-reload").onclick = () => { renderAll(); toast("Refreshed"); };
+document.getElementById("btn-save-rules").onclick = saveRulesAndMystic;
+document.getElementById("btn-reset-rules").onclick = () => { fillRulesForm(); toast("Form reset"); };
 
 document.getElementById("btn-login").onclick = async () => {
   if (!window.__fb || !auth) { toast("Firebase not configured yet", true); return; }
@@ -1316,5 +1566,5 @@ if (SHOW_ADMIN_TAB_TO_EVERYONE) document.getElementById("admin-tab-btn").classLi
 renderAll();
 initFirebase();
 </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a1a1b38d4c57d4ed',t:'MTc4Mzg3NjY0NQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a1a1be5dff62d4ed',t:'MTc4Mzg3NzA4OA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
