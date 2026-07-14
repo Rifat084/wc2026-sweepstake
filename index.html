@@ -199,8 +199,19 @@
     border-radius: 10px; padding: 12px 14px; margin-top: 14px; font-size: 13px;
   }
   .locked-note { font-size: 11px; color: var(--muted); margin-top: 8px; }
-  #admin-tab-btn { display: none; }
-  #admin-tab-btn.show { display: inline-block; }
+  #admin-tab-btn { display: none !important; }
+  #admin-tab-btn.show { display: inline-block !important; }
+  .header-admin-guest, .header-admin-user { display: none; align-items: center; gap: 8px; }
+  .header-admin-guest.show, .header-admin-user.show { display: inline-flex; }
+  .btn-ghost {
+    background: transparent; color: var(--muted); border: 1px solid var(--border);
+    padding: 5px 10px; border-radius: 999px; font-size: 11px; font-weight: 700;
+  }
+  .btn-ghost:hover { color: var(--text); border-color: rgba(96,165,250,.4); background: rgba(59,130,246,.08); }
+  #rules-edit-card { display: none; }
+  #rules-edit-card.show { display: block; }
+  .login-modal-card label { text-align: left; }
+
   .mystic-pill { display:inline-block; padding:2px 8px; border-radius:10px; font-size:11px; font-weight:700; }
   .mystic-pill.yes { background: rgba(46,204,113,0.2); color: var(--good); }
   .mystic-pill.no { background: rgba(231,76,60,0.15); color: var(--bad); }
@@ -216,7 +227,13 @@
   <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
     <span class="badge off" id="sync-badge">Connecting…</span>
     <span class="badge" id="match-badge">0 matches</span>
-    <span class="badge off" id="admin-badge">Viewer</span>
+    <span class="header-admin-guest show" id="header-admin-guest">
+      <button type="button" class="btn-ghost" id="btn-open-admin-login" title="Admin sign in">Admin</button>
+    </span>
+    <span class="header-admin-user" id="header-admin-user">
+      <span class="badge admin" id="admin-badge">Admin</span>
+      <button type="button" class="btn-ghost" id="btn-header-logout">Sign out</button>
+    </span>
   </div>
 </header>
 <div id="ticker" style="overflow:hidden;white-space:nowrap;border-bottom:1px solid var(--border);background:rgba(15,39,68,.55);font-size:12px;color:var(--muted);padding:8px 0">
@@ -452,22 +469,13 @@ tr.flash td{animation:rowFlash 1s ease}@keyframes rowFlash{0%{background:rgba(52
   <div class="panel-view" id="view-admin">
     <div class="grid-2">
       <div class="card">
-        <h2>Admin login</h2>
-        <div class="admin-box" id="login-box">
-          <h3>Sign in to edit scores</h3>
-          <div class="row">
-            <div><label>Email</label><input type="email" id="admin-email" autocomplete="username" /></div>
-            <div><label>Password</label><input type="password" id="admin-password" autocomplete="current-password" /></div>
-          </div>
-          <div class="footer-actions">
-            <button class="btn-primary" id="btn-login">Sign in</button>
-            <button class="btn-secondary" id="btn-logout" style="display:none">Sign out</button>
-          </div>
-          <div class="status-line" id="login-status">Not signed in — viewers can only look, not edit.</div>
-          <div class="help">Use the same email you put in Firebase Authentication and in firestore.rules (ADMIN_EMAIL).</div>
+        <h2>Admin tools <span class="count" id="admin-session-label">Signed in</span></h2>
+        <div class="status-line" id="admin-session-line">Signed in.</div>
+        <div class="footer-actions" style="margin-bottom:12px">
+          <button class="btn-secondary btn-sm" type="button" id="btn-logout">Sign out</button>
         </div>
 
-        <h2 style="margin-top:18px">Record match</h2>
+        <h2 style="margin-top:8px">Record match</h2>
         <div class="match-form" id="record-form">
           <div>
             <label>Stage</label>
@@ -587,6 +595,30 @@ tr.flash td{animation:rowFlash 1s ease}@keyframes rowFlash{0%{background:rgba(52
     <div class="footer-actions"><button class="btn-primary" type="button" id="btn-copy-share">Copy to clipboard</button></div>
   </div>
 </div>
+
+<div class="modal-backdrop" id="admin-login-modal">
+  <div class="modal login-modal-card" style="width:min(420px,100%)">
+    <div style="display:flex;justify-content:space-between;gap:10px;margin-bottom:12px;align-items:center">
+      <div>
+        <h3 style="margin:0">Admin sign in</h3>
+        <div style="color:var(--muted);font-size:12px;margin-top:4px">Only the site admin can edit scores and settings.</div>
+      </div>
+      <button class="btn-secondary btn-sm" type="button" id="btn-close-admin-login">Close</button>
+    </div>
+    <div class="admin-box" style="margin:0">
+      <div class="row">
+        <div><label>Email</label><input type="email" id="admin-email" autocomplete="username" /></div>
+      </div>
+      <div class="row" style="margin-top:8px">
+        <div><label>Password</label><input type="password" id="admin-password" autocomplete="current-password" /></div>
+      </div>
+      <div class="footer-actions">
+        <button class="btn-primary" type="button" id="btn-login">Sign in</button>
+      </div>
+      <div class="status-line" id="login-status">Enter your admin email and password.</div>
+    </div>
+  </div>
+</div>
 <div class="toast" id="toast"></div>
 
 <!-- Firebase SDK (loads on the real website; needs internet) -->
@@ -604,7 +636,7 @@ const FIREBASE_CONFIG = {
 };
 
 // Optional: show Admin tab link even for viewers (they still cannot write)
-const SHOW_ADMIN_TAB_TO_EVERYONE = true;
+const SHOW_ADMIN_TAB_TO_EVERYONE = false; // Admin tab only after sign-in
 
 // ============================================================
 // Seed data (verified through QFs)
@@ -873,14 +905,45 @@ function setBadges() {
     banner.innerHTML = "<strong>Almost ready.</strong> This page still has placeholder Firebase keys. Follow <strong>SETUP-GUIDE.md</strong> (Firebase + GitHub Pages). Until then, everyone only sees the built-in QF results (not shared live edits).";
   } else if (!cloudReady) {
     banner.style.display = "block";
-    banner.innerHTML = "<strong>Firebase connected, cloud empty.</strong> Admin: open the Admin tab → Sign in → <strong>Initialize cloud from seed</strong>. After that, all visitors stay in sync.";
+    banner.innerHTML = "<strong>Firebase connected, cloud empty.</strong> If you are the admin, use the header <strong>Admin</strong> button to sign in, then initialize the cloud.";
   } else {
     banner.style.display = "none";
   }
 
-  if (SHOW_ADMIN_TAB_TO_EVERYONE || isAdmin) {
-    document.getElementById("admin-tab-btn").classList.add("show");
+  // Admin tab + tools only for signed-in admin
+  const adminTab = document.getElementById("admin-tab-btn");
+  const guestBox = document.getElementById("header-admin-guest");
+  const userBox = document.getElementById("header-admin-user");
+  const rulesEdit = document.getElementById("rules-edit-card");
+  if (isAdmin || SHOW_ADMIN_TAB_TO_EVERYONE) {
+    if (adminTab) adminTab.classList.add("show");
+    if (guestBox) guestBox.classList.remove("show");
+    if (userBox) userBox.classList.add("show");
+    if (rulesEdit) rulesEdit.classList.add("show");
+  } else {
+    if (adminTab) adminTab.classList.remove("show");
+    if (guestBox) guestBox.classList.add("show");
+    if (userBox) userBox.classList.remove("show");
+    if (rulesEdit) rulesEdit.classList.remove("show");
+    // If viewer was on admin tab, bounce home
+    const adminView = document.getElementById("view-admin");
+    if (adminView && adminView.classList.contains("active")) {
+      document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+      document.querySelectorAll(".panel-view").forEach(v => v.classList.remove("active"));
+      const st = document.querySelector('.tab[data-tab="standings"]');
+      if (st) st.classList.add("active");
+      const sv = document.getElementById("view-standings");
+      if (sv) sv.classList.add("active");
+    }
   }
+  const sess = document.getElementById("admin-session-line");
+  const sessLab = document.getElementById("admin-session-label");
+  if (sess && auth?.currentUser) {
+    sess.innerHTML = `Signed in as <strong>${esc(auth.currentUser.email || "admin")}</strong>`;
+  } else if (sess) {
+    sess.textContent = "Not signed in.";
+  }
+  if (sessLab) sessLab.textContent = isAdmin ? "Signed in" : "Locked";
 }
 
 function renderAll() {
@@ -1324,8 +1387,13 @@ function renderUpcoming() {
       document.getElementById("m-team-a").value = s.a;
       document.getElementById("m-team-b").value = s.b;
       updateWinnerOptions();
-      document.querySelector('.tab[data-tab="admin"]').click();
-      toast("Fixture loaded — enter the score");
+      if (isAdmin) {
+        goToAdminTab();
+        toast("Fixture loaded — enter the score");
+      } else {
+        toast("Sign in as admin to record matches", true);
+        openAdminLoginModal();
+      }
     };
   });
 }
@@ -1916,11 +1984,16 @@ async function initFirebase() {
 
     onAuthStateChanged(auth, (user) => {
       isAdmin = !!(user && user.email);
-      document.getElementById("btn-logout").style.display = user ? "inline-block" : "none";
-      document.getElementById("btn-login").style.display = user ? "none" : "inline-block";
-      document.getElementById("login-status").innerHTML = user
-        ? `Signed in as <strong>${esc(user.email)}</strong>`
-        : "Not signed in — viewers can only look, not edit.";
+      const loginStatus = document.getElementById("login-status");
+      if (loginStatus) {
+        loginStatus.innerHTML = user
+          ? `Signed in as <strong>${esc(user.email)}</strong>`
+          : "Enter your admin email and password.";
+      }
+      if (user) {
+        const m = document.getElementById("admin-login-modal");
+        if (m) m.classList.remove("show");
+      }
       setBadges();
       renderAll();
     });
@@ -2094,6 +2167,26 @@ document.getElementById("btn-reload").onclick = () => { renderAll(); toast("Refr
 document.getElementById("btn-save-rules").onclick = saveRulesAndMystic;
 document.getElementById("btn-reset-rules").onclick = () => { fillRulesForm(); toast("Form reset"); };
 
+function openAdminLoginModal() {
+  const m = document.getElementById("admin-login-modal");
+  if (m) m.classList.add("show");
+  const email = document.getElementById("admin-email");
+  if (email) setTimeout(() => email.focus(), 50);
+}
+function closeAdminLoginModal() {
+  const m = document.getElementById("admin-login-modal");
+  if (m) m.classList.remove("show");
+}
+function goToAdminTab() {
+  const tab = document.getElementById("admin-tab-btn");
+  if (!tab) return;
+  tab.classList.add("show");
+  document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+  document.querySelectorAll(".panel-view").forEach(v => v.classList.remove("active"));
+  tab.classList.add("active");
+  const view = document.getElementById("view-admin");
+  if (view) view.classList.add("active");
+}
 document.getElementById("btn-login").onclick = async () => {
   if (!window.__fb || !auth) { toast("Firebase not configured yet", true); return; }
   const email = document.getElementById("admin-email").value.trim();
@@ -2101,20 +2194,46 @@ document.getElementById("btn-login").onclick = async () => {
   if (!email || !password) { toast("Enter email and password", true); return; }
   try {
     await window.__fb.signInWithEmailAndPassword(auth, email, password);
-    toast("Signed in");
+    toast("Signed in as admin");
     document.getElementById("admin-password").value = "";
+    closeAdminLoginModal();
+    // ensure tab visible then open tools
+    setTimeout(() => { setBadges(); goToAdminTab(); }, 50);
   } catch (e) {
     toast(e.message || "Login failed", true);
   }
 };
-document.getElementById("btn-logout").onclick = async () => {
+async function doLogout() {
   if (!window.__fb || !auth) return;
   await window.__fb.signOut(auth);
   toast("Signed out");
-};
+  // return to standings
+  document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+  document.querySelectorAll(".panel-view").forEach(v => v.classList.remove("active"));
+  const st = document.querySelector('.tab[data-tab="standings"]');
+  if (st) st.classList.add("active");
+  const sv = document.getElementById("view-standings");
+  if (sv) sv.classList.add("active");
+}
+document.getElementById("btn-logout").onclick = doLogout;
+const _hdrLogout = document.getElementById("btn-header-logout");
+if (_hdrLogout) _hdrLogout.onclick = doLogout;
+const _openLogin = document.getElementById("btn-open-admin-login");
+if (_openLogin) _openLogin.onclick = openAdminLoginModal;
+const _closeLogin = document.getElementById("btn-close-admin-login");
+if (_closeLogin) _closeLogin.onclick = closeAdminLoginModal;
+const _loginModal = document.getElementById("admin-login-modal");
+if (_loginModal) _loginModal.onclick = (e) => { if (e.target.id === "admin-login-modal") closeAdminLoginModal(); };
+// Enter key submits login
+["admin-email","admin-password"].forEach(id => {
+  const el = document.getElementById(id);
+  if (el) el.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") document.getElementById("btn-login").click();
+  });
+});
 
 // Boot
-if (SHOW_ADMIN_TAB_TO_EVERYONE) document.getElementById("admin-tab-btn").classList.add("show");
+// Admin tab stays hidden until sign-in
 const _share=document.getElementById("btn-share"); if(_share) _share.onclick=shareStandingsUI;
 const _mc=document.getElementById("modal-close"); if(_mc) _mc.onclick=()=>document.getElementById("modal").classList.remove("show");
 const _sc=document.getElementById("share-close"); if(_sc) _sc.onclick=()=>document.getElementById("share-modal").classList.remove("show");
@@ -2138,5 +2257,5 @@ applyTickerSpeed();
 renderAll();
 initFirebase();
 </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a1a2bd334ff8d4ed',t:'MTc4Mzg4NzUyNg=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</body>
 </html>
