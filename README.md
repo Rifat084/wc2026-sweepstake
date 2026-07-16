@@ -1,4 +1,4 @@
-# WC 2026 Office Sweepstake — Live Website
+# WC 2026 Office Sweepstake — Live Website (https://rifat084.github.io/wc2026-sweepstake/)
 
 Live shared standings for 6 participants (email scoring rules).
 
