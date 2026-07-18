@@ -391,9 +391,9 @@ tr.flash td{animation:rowFlash 1s ease}@keyframes rowFlash{0%{background:rgba(52
 
   <div class="panel-view" id="view-bracket">
     <div class="card">
-      <h2><span>Knockout path</span><span class="count">From your match data</span></h2>
+      <h2><span>Knockout path</span><span class="count" id="bracket-status">Knockouts</span></h2>
       <div class="bracket" id="bracket"></div>
-      <div class="help">Updates when SF/Final results are synced or recorded.</div>
+      <div class="help">Semi-final losers fill 3rd place automatically. Finalists appear as soon as both semis are decided. Live scores refresh from the feed.</div>
     </div>
   </div>
   <div class="panel-view" id="view-compare">
@@ -827,14 +827,40 @@ function compute() {
   for (const name of Object.keys(part)) {
     for (const team of Object.keys(part[name].teams)) {
       const t = part[name].teams[team];
-      let lostKO = false, wonFinal = false, playedKO = false;
+      let playedKO = false;
+      let eliminated = false;
+      let wonFinal = false;
+      let lostSF = false;
+      let playedThird = false;
+      let lostThird = false;
+      let playedFinal = false;
       for (const e of t.log) {
         if (e.stage === "GS") continue;
         playedKO = true;
-        if (e.note.startsWith("LOSS") && e.stage !== "3RD") lostKO = true;
-        if (e.stage === "F" && e.note.startsWith("WIN")) wonFinal = true;
+        const loss = e.note.startsWith("LOSS");
+        const win = e.note.startsWith("WIN");
+        if (e.stage === "R32" || e.stage === "R16" || e.stage === "QF") {
+          if (loss) eliminated = true;
+        } else if (e.stage === "SF") {
+          if (loss) lostSF = true;
+          if (win) { /* reaches final */ }
+        } else if (e.stage === "3RD") {
+          playedThird = true;
+          if (loss) lostThird = true;
+        } else if (e.stage === "F") {
+          playedFinal = true;
+          if (win) wonFinal = true;
+          // after final (win or loss), tournament path is done
+          if (win || loss) eliminated = !win; // champion stays special via wonFinal
+        }
       }
-      t.alive = playedKO && (!lostKO || wonFinal);
+      // SF losers remain alive until 3rd-place match is completed
+      if (lostSF && !playedFinal) {
+        if (playedThird) eliminated = lostThird;
+        else eliminated = false;
+      }
+      if (wonFinal) eliminated = false;
+      t.alive = playedKO && !eliminated;
     }
   }
   // Mystic Bonus: +N if pick equals World Cup champion (Final winner)
@@ -1529,8 +1555,10 @@ function renderNextMatchHero() {
   const cd = document.getElementById("countdown");
   if (!title) return;
 
-  // Prefer a currently LIVE feed match if any
-  const liveNow = (liveFeedCache || []).find(g => g.live) || null;
+  // Prefer a currently LIVE feed match if any (Final/3rd/SF first)
+  const liveNow = (liveFeedCache || []).find(g => g.live && (g.stage === "F" || g.stage === "3RD" || g.stage === "SF"))
+    || (liveFeedCache || []).find(g => g.live)
+    || null;
   let n = null;
   let liveInfo = null;
 
@@ -1633,24 +1661,121 @@ function bracketSide(team, score, winner){
     <strong class="bracket-score">${score??"—"}</strong>
   </div>`;
 }
+function sfLoser(m) {
+  const w = resolveWinner(m);
+  if (!w || !m) return null;
+  if (m.teamA === w) return m.teamB;
+  if (m.teamB === w) return m.teamA;
+  return null;
+}
+function pickMatchRecord(stage, a, b) {
+  // Prefer stored match, then live feed snapshot
+  let m = null;
+  if (a && b) m = findMatchUI(stage, a, b);
+  if (!m) m = matches.find(x => x.stage === stage) || null;
+  const feed = (a && b) ? findLiveFeedMatch(a, b, stage) : (liveFeedCache || []).find(g => g.stage === stage) || null;
+  if (feed) {
+    // orient feed to a/b if provided
+    let teamA = feed.teamA, teamB = feed.teamB, sa = feed.scoreA, sb = feed.scoreB;
+    if (a && b) {
+      if (feed.teamA === a && feed.teamB === b) { teamA=a; teamB=b; sa=feed.scoreA; sb=feed.scoreB; }
+      else if (feed.teamA === b && feed.teamB === a) { teamA=a; teamB=b; sa=feed.scoreB; sb=feed.scoreA; }
+      else { teamA = feed.teamA; teamB = feed.teamB; }
+    }
+    const finished = !!feed.finished;
+    let winner = null;
+    if (finished) {
+      if (sa > sb) winner = teamA;
+      else if (sb > sa) winner = teamB;
+    }
+    // Prefer feed scores for live/display; keep stored winner if feed not finished but match has winner
+    const base = m ? { ...m } : { id: "feed_" + stage, stage, date: "", group: "" };
+    return {
+      ...base,
+      teamA, teamB,
+      scoreA: sa,
+      scoreB: sb,
+      winner: winner || (m && m.winner) || null,
+      note: feed.live ? (feed.timeElapsed && String(feed.timeElapsed).toLowerCase() !== "live" ? ("LIVE " + feed.timeElapsed) : "LIVE") : (m && m.note) || "",
+      live: !!feed.live,
+      finished
+    };
+  }
+  if (m) return { ...m, live: false, finished: !!resolveWinner(m) };
+  if (a && b) return { teamA: a, teamB: b, scoreA: "—", scoreB: "—", stage, winner: null, note: "", live: false, finished: false };
+  return { teamA: "TBD", teamB: "TBD", scoreA: "—", scoreB: "—", stage, winner: null, note: "", live: false, finished: false };
+}
 function renderBracketUI(){
   const el = document.getElementById("bracket"); if (!el) return;
-  const sf1 = findMatchUI("SF","France","Spain") || {teamA:"France",teamB:"Spain",scoreA:"—",scoreB:"—",stage:"SF"};
-  const sf2 = findMatchUI("SF","England","Argentina") || {teamA:"England",teamB:"Argentina",scoreA:"—",scoreB:"—",stage:"SF"};
-  const fin = matches.find(m=>m.stage==="F") || null;
-  const third = matches.find(m=>m.stage==="3RD") || null;
-  const w1=resolveWinner(sf1), w2=resolveWinner(sf2);
-  const card = (label,m)=>{
-    const w=resolveWinner(m);
-    return `<div class="bracket-match"><div class="bm-head">${esc(label)}${m.note?" · "+esc(m.note):""}</div>${bracketSide(m.teamA,m.scoreA,w)}${bracketSide(m.teamB,m.scoreB,w)}</div>`;
+  const sf1raw = findMatchUI("SF","France","Spain") || {teamA:"France",teamB:"Spain",scoreA:"—",scoreB:"—",stage:"SF"};
+  const sf2raw = findMatchUI("SF","England","Argentina") || {teamA:"England",teamB:"Argentina",scoreA:"—",scoreB:"—",stage:"SF"};
+  // enrich SF from feed if needed
+  const sf1 = pickMatchRecord("SF", "France", "Spain");
+  const sf2 = pickMatchRecord("SF", "England", "Argentina");
+  // if pickMatchRecord lost teams, fall back
+  if (!sf1.teamA || sf1.teamA === "TBD") { sf1.teamA = sf1raw.teamA; sf1.teamB = sf1raw.teamB; sf1.scoreA = sf1raw.scoreA; sf1.scoreB = sf1raw.scoreB; sf1.winner = resolveWinner(sf1raw); }
+  if (!sf2.teamA || sf2.teamA === "TBD") { sf2.teamA = sf2raw.teamA; sf2.teamB = sf2raw.teamB; sf2.scoreA = sf2raw.scoreA; sf2.scoreB = sf2raw.scoreB; sf2.winner = resolveWinner(sf2raw); }
+
+  const w1 = resolveWinner(sf1);
+  const w2 = resolveWinner(sf2);
+  const l1 = sfLoser(sf1);
+  const l2 = sfLoser(sf2);
+
+  const fin = pickMatchRecord("F", w1, w2);
+  const third = pickMatchRecord("3RD", l1, l2);
+
+  // Ensure final/third teams show known finalists/losers even if match placeholders were TBD
+  if (w1 && w2) {
+    if (!fin.teamA || fin.teamA === "TBD") { fin.teamA = w1; fin.teamB = w2; }
+    // orient if swapped
+    if (fin.teamA === w2 && fin.teamB === w1) {
+      // keep orientation as stored/feed
+    } else if (fin.teamA !== w1 && fin.teamA !== w2) {
+      fin.teamA = w1; fin.teamB = w2;
+    }
+  }
+  if (l1 && l2) {
+    if (!third.teamA || third.teamA === "TBD") { third.teamA = l1; third.teamB = l2; }
+    else if (third.teamA !== l1 && third.teamA !== l2) { third.teamA = l1; third.teamB = l2; }
+  }
+
+  const card = (label, m) => {
+    const w = resolveWinner(m);
+    const liveTag = m.live ? ' · <span style="color:#fca5a5">LIVE</span>' : '';
+    const note = m.note ? (" · " + esc(m.note)) : "";
+    return `<div class="bracket-match"><div class="bm-head">${esc(label)}${liveTag}${note}</div>${bracketSide(m.teamA,m.scoreA,w)}${bracketSide(m.teamB,m.scoreB,w)}</div>`;
   };
+
+  let centerStatus = "Awaiting finalists";
+  if (fin && resolveWinner(fin)) {
+    const champ = resolveWinner(fin);
+    centerStatus = "Champion: " + flag(champ) + esc(champ);
+  } else if (w1 && w2) {
+    centerStatus = "Finalists locked";
+  } else if (w1 || w2) {
+    centerStatus = "Waiting for other semi-final";
+  }
+
+  const centerLeft = w1 || "TBD";
+  const centerRight = w2 || "TBD";
+
   el.innerHTML = `<div>${card("Semi-final",sf1)}${card("Semi-final",sf2)}</div>
     <div class="bracket-final"><div style="font-size:28px">🏆</div>
       <div style="font-size:12px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin:6px 0">Final</div>
-      <div style="font-weight:800">${flag(w1||"France")}${esc(w1||"France/Spain")} vs ${flag(w2||"England")}${esc(w2||"England/Argentina")}</div>
-      <div style="margin-top:8px;color:var(--muted);font-size:12px">${fin&&resolveWinner(fin)?("Champion: "+flag(resolveWinner(fin))+esc(resolveWinner(fin))):"Awaiting finalists"}</div>
+      <div style="font-weight:800">${centerLeft==="TBD"?"TBD":flag(centerLeft)}${esc(centerLeft)} <span style="color:var(--muted)">vs</span> ${centerRight==="TBD"?"TBD":flag(centerRight)}${esc(centerRight)}</div>
+      <div style="margin-top:8px;color:var(--muted);font-size:12px">${centerStatus}</div>
+      ${fin && (fin.live || (fin.scoreA !== "—" && fin.scoreB !== "—" && (fin.scoreA !== 0 || fin.scoreB !== 0 || fin.live))) ? `<div class="live-score-line" style="font-size:18px;margin-top:10px">${esc(fin.teamA)} <span class="sep">${fin.scoreA}</span>-<span class="sep">${fin.scoreB}</span> ${esc(fin.teamB)}</div>` : ""}
     </div>
-    <div>${card("Final", fin||{teamA:w1||"TBD",teamB:w2||"TBD",scoreA:"—",scoreB:"—",stage:"F"})}${card("3rd place", third||{teamA:"TBD",teamB:"TBD",scoreA:"—",scoreB:"—",stage:"3RD"})}</div>`;
+    <div>${card("Final", fin)}${card("3rd place", third)}</div>`;
+
+  const st = document.getElementById("bracket-status");
+  if (st) {
+    if (fin && resolveWinner(fin)) st.textContent = "Complete";
+    else if (third && third.live) st.textContent = "3rd place LIVE";
+    else if (fin && fin.live) st.textContent = "Final LIVE";
+    else if (w1 && w2) st.textContent = "Final set";
+    else st.textContent = "In progress";
+  }
 }
 function clampTickerSpeed(sec){
   const n = Number(sec);
@@ -1999,7 +2124,13 @@ function mapFeedGame(g) {
     // skip placeholders (Winner Group X) and unknown teams
     return null;
   }
-  if (!isFinishedGame(g)) return null;
+
+  const finished = isFinishedGame(g);
+  const live = isLiveGame(g);
+  // Group stage: only store finished results
+  if (stage === "GS" && !finished) return null;
+  // Knockout: allow live/unfinished once both teams are known (for bracket + live scores)
+  // Points are only awarded when winner is set (finished).
 
   const scoreA = parseInt(g.home_score, 10);
   const scoreB = parseInt(g.away_score, 10);
@@ -2009,23 +2140,28 @@ function mapFeedGame(g) {
   let note = "";
   const penA = g.home_penalty_score != null && g.home_penalty_score !== "" ? parseInt(g.home_penalty_score, 10) : null;
   const penB = g.away_penalty_score != null && g.away_penalty_score !== "" ? parseInt(g.away_penalty_score, 10) : null;
+  const te = String(g.time_elapsed || "").toLowerCase();
 
-  if (penA != null && penB != null && !Number.isNaN(penA) && !Number.isNaN(penB) && scoreA === scoreB) {
-    winner = penA > penB ? teamA : (penB > penA ? teamB : null);
-    note = "pens " + penA + "-" + penB;
-  } else if (scoreA !== scoreB) {
-    winner = scoreA > scoreB ? teamA : teamB;
-    // Feed does not always flag AET; leave blank unless elapsed hints
-    const te = String(g.time_elapsed || "").toLowerCase();
-    if (te === "aet" || te.includes("extra")) note = "AET";
-  } else if (stage === "GS") {
-    winner = null;
+  if (finished) {
+    if (penA != null && penB != null && !Number.isNaN(penA) && !Number.isNaN(penB) && scoreA === scoreB) {
+      winner = penA > penB ? teamA : (penB > penA ? teamB : null);
+      note = "pens " + penA + "-" + penB;
+    } else if (scoreA !== scoreB) {
+      winner = scoreA > scoreB ? teamA : teamB;
+      if (te === "aet" || te.includes("extra")) note = "AET";
+    } else if (stage === "GS") {
+      winner = null;
+    } else {
+      // KO finished draw without pens data — cannot resolve winner
+      return null;
+    }
+    if (stage !== "GS" && !winner) return null;
   } else {
-    // KO draw without pens data — cannot resolve
-    return null;
+    // in-progress / scheduled KO
+    if (live) note = te && te !== "live" ? ("LIVE " + te) : "LIVE";
+    else note = "";
+    winner = null;
   }
-
-  if (stage !== "GS" && !winner) return null;
 
   const group = stage === "GS" ? String(g.group || "").replace(/^Group\s*/i, "") : "";
   return {
@@ -2040,7 +2176,9 @@ function mapFeedGame(g) {
     winner,
     note,
     source: "live-feed",
-    feedId: String(g.id || "")
+    feedId: String(g.id || ""),
+    live: !!live,
+    finished: !!finished
   };
 }
 
@@ -2673,5 +2811,5 @@ applyTickerSpeed();
 renderAll();
 initFirebase();
 </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a1d4a5a6eaa733a4',t:'MTc4NDQxMDg1MA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a1d4b01f99f7dd0d',t:'MTc4NDQxMTI3OQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
