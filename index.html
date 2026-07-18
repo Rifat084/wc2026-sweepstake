@@ -290,6 +290,26 @@
 }
 .bracket-score{font-variant-numeric:tabular-nums;min-width:1.5em;text-align:right}
 .speed-presets{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.live-pill{
+  display:inline-flex;align-items:center;gap:6px;
+  background:rgba(239,68,68,.16);color:#fca5a5;
+  border:1px solid rgba(248,113,113,.45);
+  padding:3px 10px;border-radius:999px;font-size:11px;font-weight:800;
+  letter-spacing:.4px;text-transform:uppercase;
+}
+.live-pill .live-dot{
+  width:8px;height:8px;border-radius:50%;background:#ef4444;
+  box-shadow:0 0 0 0 rgba(239,68,68,.7);
+  animation:livePulse 1.4s infinite;
+}
+@keyframes livePulse{
+  0%{box-shadow:0 0 0 0 rgba(239,68,68,.65)}
+  70%{box-shadow:0 0 0 8px rgba(239,68,68,0)}
+  100%{box-shadow:0 0 0 0 rgba(239,68,68,0)}
+}
+.live-score-line{margin-top:8px;font-size:22px;font-weight:900;color:#fff;letter-spacing:.5px}
+.live-score-line .sep{color:var(--muted);margin:0 8px;font-weight:700}
+
 
 .bracket-final{text-align:center;padding:18px;border-radius:14px;border:1px solid rgba(96,165,250,.35);background:linear-gradient(180deg,rgba(37,99,235,.25),rgba(15,39,68,.9))}
 tr.flash td{animation:rowFlash 1s ease}@keyframes rowFlash{0%{background:rgba(52,211,153,.2)}100%{background:transparent}}
@@ -565,7 +585,7 @@ tr.flash td{animation:rowFlash 1s ease}@keyframes rowFlash{0%{background:rgba(52
         </div>
         <div class="help">
           First time: sign in → <strong>Initialize cloud from seed</strong>.<br>
-          Then use <strong>Sync live scores</strong> or <strong>Auto-sync</strong> so finished World Cup results update points for everyone.
+          Then use <strong>Sync live scores</strong> or turn <strong>Auto-sync ON</strong> (saved for your admin account across refresh). Auto-sync needs this admin browser session open to pull finished results into the cloud. Live scores on the home card update for everyone every minute from the public feed.
         </div>
         <h2 style="margin-top:18px">Suggested fixtures</h2>
         <div id="upcoming"></div>
@@ -889,7 +909,17 @@ function setBadges() {
   document.querySelectorAll("[data-speed], #btn-ticker-slow, #btn-ticker-fast").forEach(el => {
     if (el) el.disabled = !canEdit;
   });
-  if (!isAdmin && autoSyncOn) setAutoSync(false);
+  if (!isAdmin) {
+    // viewers never run write-auto-sync timers
+    if (autoSyncOn) {
+      autoSyncOn = false;
+      applyAutoSyncButton();
+      stopAutoSyncTimer();
+    }
+  } else if (cloudReady && autoSyncDesired && !autoSyncTimer) {
+    // admin logged in / refreshed: resume if preference is ON
+    restoreAutoSyncFromSettings();
+  }
   document.getElementById("edit-lock-note").textContent = canEdit
     ? "Editing unlocked — saves go live for everyone."
     : (!isConfigReady()
@@ -1498,38 +1528,83 @@ function renderNextMatchHero() {
   const sub = document.getElementById("next-match-sub");
   const cd = document.getElementById("countdown");
   if (!title) return;
-  if (!fixtures.length) {
-    title.textContent = "No upcoming fixtures";
+
+  // Prefer a currently LIVE feed match if any
+  const liveNow = (liveFeedCache || []).find(g => g.live) || null;
+  let n = null;
+  let liveInfo = null;
+
+  if (liveNow) {
+    n = {
+      stage: liveNow.stage,
+      a: liveNow.teamA,
+      b: liveNow.teamB,
+      kickoff: resolveKickoffISO(liveNow.stage, liveNow.teamA, liveNow.teamB)
+    };
+    liveInfo = liveNow;
+  } else if (!fixtures.length) {
+    // fallback: show last known unfinished final/third from fixtures list empty
+    title.innerHTML = 'No upcoming fixtures';
     if (sub) sub.textContent = "All tracked knockout games are complete (or sync for updates).";
     if (cd) cd.innerHTML = "";
     return;
+  } else {
+    const now = Date.now();
+    n = fixtures.find(f => f.kickoff && +new Date(f.kickoff) > now - 3 * 3600 * 1000) || fixtures[0];
+    liveInfo = findLiveFeedMatch(n.a, n.b, n.stage);
   }
-  // Prefer the soonest future kickoff; if all past, show first unfinished
-  const now = Date.now();
-  let n = fixtures.find(f => f.kickoff && +new Date(f.kickoff) > now - 3 * 3600 * 1000) || fixtures[0];
-  title.innerHTML = `${flag(n.a)}${esc(n.a)} <span style="color:var(--muted)">vs</span> ${flag(n.b)}${esc(n.b)}`;
+
+  const isLive = !!(liveInfo && liveInfo.live);
+  const liveBadge = isLive ? ' <span class="live-pill"><span class="live-dot"></span>Live</span>' : '';
+  title.innerHTML = `${flag(n.a)}${esc(n.a)} <span style="color:var(--muted)">vs</span> ${flag(n.b)}${esc(n.b)}${liveBadge}`;
+
   const local = formatLocalKickoff(n.kickoff);
   const owners = `${OWNER[n.a] || "?"} vs ${OWNER[n.b] || "?"}`;
   if (sub) {
-    const tzBit = local.tz
-      ? (' <span style="color:var(--muted)">(' + esc(local.tz) + ' · your local time)</span>')
-      : ' <span style="color:var(--muted)">(your local time)</span>';
-    sub.innerHTML = esc(n.stage) + ' · <strong>' + esc(local.when) + '</strong>' + tzBit + ' · ' + esc(owners);
+    if (isLive) {
+      const minute = liveInfo.timeElapsed && liveInfo.timeElapsed.toLowerCase() !== "live"
+        ? ` · ${esc(liveInfo.timeElapsed)}`
+        : "";
+      sub.innerHTML = `<span style="color:#fca5a5;font-weight:800">${esc(n.stage)} in progress</span>${minute} · ${esc(owners)}`;
+    } else {
+      const tzBit = local.tz
+        ? (' <span style="color:var(--muted)">(' + esc(local.tz) + ' · your local time)</span>')
+        : ' <span style="color:var(--muted)">(your local time)</span>';
+      sub.innerHTML = esc(n.stage) + ' · <strong>' + esc(local.when) + '</strong>' + tzBit + ' · ' + esc(owners);
+    }
   }
+
+  // Score line under subtitle via countdown container when live
   const target = n.kickoff ? new Date(n.kickoff) : null;
   function tick() {
     if (!cd) return;
+    // refresh liveInfo each tick lightly from cache
+    const live = findLiveFeedMatch(n.a, n.b, n.stage) || (liveInfo && liveInfo.live ? liveInfo : null);
+    if (live && live.live) {
+      // orient scores to n.a / n.b
+      let sa = live.scoreA, sb = live.scoreB;
+      if (live.teamA === n.b && live.teamB === n.a) { sa = live.scoreB; sb = live.scoreA; }
+      const clock = live.timeElapsed && String(live.timeElapsed).toLowerCase() !== "live"
+        ? esc(String(live.timeElapsed))
+        : "LIVE";
+      cd.innerHTML = `
+        <div style="width:100%">
+          <div class="live-score-line">${esc(n.a)} <span class="sep">${sa}</span>-<span class="sep">${sb}</span> ${esc(n.b)}</div>
+          <div style="margin-top:6px"><span class="live-pill"><span class="live-dot"></span>${clock}</span></div>
+        </div>`;
+      return;
+    }
     if (!target || Number.isNaN(+target)) {
       cd.innerHTML = `<div class="cd-unit"><b>—</b><span>TBD</span></div>`;
       return;
     }
     let ms = target.getTime() - Date.now();
     if (ms <= 0) {
-      // Within kickoff window
       if (ms > -3 * 3600 * 1000) {
-        cd.innerHTML = `<div class="cd-unit"><b>Live</b><span>window</span></div>`;
+        cd.innerHTML = `<div class="cd-unit"><b>Live</b><span>window</span></div>
+          <div class="help" style="margin-top:8px">Waiting for live score feed…</div>`;
       } else {
-        cd.innerHTML = `<div class="cd-unit"><b>Done</b><span>kickoff</span></div>`;
+        cd.innerHTML = `<div class="cd-unit"><b>FT</b><span>soon</span></div>`;
       }
       return;
     }
@@ -1821,8 +1896,12 @@ const STAGE_MAP = {
 
 let autoSyncOn = false;
 let autoSyncTimer = null;
+let autoSyncDesired = false; // persisted preference (Firebase); restored after admin login
 let lastSyncAt = null;
 let lastSyncSummary = "";
+let liveFeedCache = []; // raw/normalized live+upcoming games from public feed
+let livePollTimer = null;
+const LIVE_POLL_MS = 60 * 1000; // viewers/admin: refresh live scores every 60s
 
 function normTeam(name) {
   if (!name || name === "None" || name === "null") return null;
@@ -1856,6 +1935,48 @@ function isFinishedGame(g) {
   const fin = String(g.finished || "").toUpperCase();
   const te = String(g.time_elapsed || "").toLowerCase();
   return fin === "TRUE" || te === "finished" || te === "ft" || te === "aet" || te === "pen";
+}
+function isLiveGame(g) {
+  if (!g) return false;
+  if (isFinishedGame(g)) return false;
+  const te = String(g.time_elapsed || "").toLowerCase();
+  const fin = String(g.finished || "").toUpperCase();
+  if (fin === "TRUE") return false;
+  // common live markers from feed
+  if (["live", "1h", "2h", "ht", "et", "aet", "pen_live", "inprogress", "in play", "playing"].includes(te)) return true;
+  if (te.includes("live") || te.includes("min") || /^\d{1,3}$/.test(te)) return true;
+  // if kickoff passed and not finished, treat as live-ish
+  return false;
+}
+function normalizeFeedGameLite(g) {
+  const type = String(g.type || "").toLowerCase();
+  const stage = STAGE_MAP[type];
+  if (!stage) return null;
+  const teamA = normTeam(g.home_team_name_en || g.home_team_label);
+  const teamB = normTeam(g.away_team_name_en || g.away_team_label);
+  if (!teamA || !teamB) return null;
+  const scoreA = parseInt(g.home_score, 10);
+  const scoreB = parseInt(g.away_score, 10);
+  return {
+    stage,
+    teamA,
+    teamB,
+    scoreA: Number.isNaN(scoreA) ? 0 : scoreA,
+    scoreB: Number.isNaN(scoreB) ? 0 : scoreB,
+    finished: isFinishedGame(g),
+    live: isLiveGame(g),
+    timeElapsed: String(g.time_elapsed || ""),
+    feedId: String(g.id || ""),
+    localDate: g.local_date || ""
+  };
+}
+function findLiveFeedMatch(a, b, stage) {
+  const set = new Set([a, b]);
+  return liveFeedCache.find(g =>
+    g.stage === stage && set.has(g.teamA) && set.has(g.teamB) && (g.live || !g.finished)
+  ) || liveFeedCache.find(g =>
+    set.has(g.teamA) && set.has(g.teamB) && g.live
+  ) || null;
 }
 
 function mapFeedGame(g) {
@@ -2034,26 +2155,90 @@ async function syncLiveScores({ silent } = {}) {
   }
 }
 
-function setAutoSync(on) {
-  autoSyncOn = !!on;
+function applyAutoSyncButton() {
   const btn = document.getElementById("btn-auto-sync");
-  if (btn) {
-    btn.textContent = autoSyncOn ? "Auto-sync: ON" : "Auto-sync: OFF";
-    btn.classList.toggle("btn-primary", autoSyncOn);
-    btn.classList.toggle("btn-secondary", !autoSyncOn);
-  }
+  if (!btn) return;
+  btn.textContent = autoSyncOn ? "Auto-sync: ON" : "Auto-sync: OFF";
+  btn.classList.toggle("btn-primary", autoSyncOn);
+  btn.classList.toggle("btn-secondary", !autoSyncOn);
+}
+function stopAutoSyncTimer() {
   if (autoSyncTimer) {
     clearInterval(autoSyncTimer);
     autoSyncTimer = null;
   }
+}
+function startAutoSyncTimer() {
+  stopAutoSyncTimer();
+  if (!autoSyncOn) return;
+  // only the signed-in admin actually writes feed results
+  if (!isAdmin || !cloudReady) return;
+  syncLiveScores({ silent: true });
+  autoSyncTimer = setInterval(() => {
+    if (isAdmin && cloudReady && autoSyncOn) syncLiveScores({ silent: true });
+  }, AUTO_SYNC_MS);
+  setLiveFeedStatus("Auto-sync every 3 min");
+}
+async function persistAutoSyncSetting(on) {
+  if (!isAdmin || !cloudReady || !db || !window.__fb || !auth?.currentUser) return;
+  try {
+    const { doc, setDoc, serverTimestamp } = window.__fb;
+    await setDoc(doc(db, DOC_PATH.col, DOC_PATH.id), {
+      settings: { autoSync: !!on },
+      updatedAt: serverTimestamp(),
+      updatedAtClient: new Date().toISOString(),
+      updatedBy: auth.currentUser.email || "admin"
+    }, { merge: true });
+  } catch (e) {
+    console.warn("persist autoSync failed", e);
+  }
+}
+function setAutoSync(on, { persist = false, silent = false } = {}) {
+  autoSyncOn = !!on;
+  autoSyncDesired = autoSyncOn;
+  applyAutoSyncButton();
+  stopAutoSyncTimer();
   if (autoSyncOn) {
-    // run soon, then every 3 min
-    syncLiveScores({ silent: true });
-    autoSyncTimer = setInterval(() => syncLiveScores({ silent: true }), AUTO_SYNC_MS);
-    setLiveFeedStatus("Auto-sync every 3 min");
+    startAutoSyncTimer();
+  } else if (!silent) {
+    setLiveFeedStatus("Auto-sync off");
+  }
+  if (persist) persistAutoSyncSetting(autoSyncOn);
+}
+function restoreAutoSyncFromSettings() {
+  // Called after admin auth + cloud ready
+  if (!isAdmin || !cloudReady) {
+    stopAutoSyncTimer();
+    autoSyncOn = false;
+    applyAutoSyncButton();
+    return;
+  }
+  if (autoSyncDesired) setAutoSync(true, { persist: false, silent: true });
+  else {
+    autoSyncOn = false;
+    applyAutoSyncButton();
+    stopAutoSyncTimer();
   }
 }
 
+
+
+async function refreshLiveFeedCache({ silent } = {}) {
+  try {
+    const games = await fetchLiveFeedGames();
+    liveFeedCache = games.map(normalizeFeedGameLite).filter(Boolean);
+    // update next-match live UI without full recompute if possible
+    try { renderNextMatchHero(); } catch (e) {}
+    try { renderBracketUI(); } catch (e) {}
+  } catch (e) {
+    if (!silent) console.warn("live feed poll failed", e);
+  }
+}
+function startLiveScorePolling() {
+  if (livePollTimer) return;
+  refreshLiveFeedCache({ silent: true });
+  livePollTimer = setInterval(() => refreshLiveFeedCache({ silent: true }), LIVE_POLL_MS);
+}
 
 // ---------- Firebase ----------
 async function initFirebase() {
@@ -2086,6 +2271,13 @@ async function initFirebase() {
         const m = document.getElementById("admin-login-modal");
         if (m) m.classList.remove("show");
       }
+      // resume auto-sync preference after auth resolves
+      if (isAdmin && cloudReady) restoreAutoSyncFromSettings();
+      else {
+        stopAutoSyncTimer();
+        autoSyncOn = false;
+        applyAutoSyncButton();
+      }
       setBadges();
       renderAll();
     });
@@ -2113,13 +2305,21 @@ async function initFirebase() {
           mystic = { picks };
         }
         // Global ticker speed for all viewers
-        if (data.settings && data.settings.tickerSpeedSec != null) {
-          const liveSec = clampTickerSpeed(data.settings.tickerSpeedSec);
-          tickerSpeedLiveSec = liveSec;
-          // Viewers always follow live. Admin keeps preview only if dirty.
-          if (!isAdmin || !tickerSpeedDirty) {
-            tickerSpeedSec = liveSec;
-            tickerSpeedDirty = false;
+        if (data.settings && typeof data.settings === "object") {
+          if (data.settings.tickerSpeedSec != null) {
+            const liveSec = clampTickerSpeed(data.settings.tickerSpeedSec);
+            tickerSpeedLiveSec = liveSec;
+            // Viewers always follow live. Admin keeps preview only if dirty.
+            if (!isAdmin || !tickerSpeedDirty) {
+              tickerSpeedSec = liveSec;
+              tickerSpeedDirty = false;
+            }
+          }
+          if (data.settings.autoSync != null) {
+            autoSyncDesired = !!data.settings.autoSync;
+            // Resume timer only for signed-in admin
+            if (isAdmin && cloudReady) restoreAutoSyncFromSettings();
+            else applyAutoSyncButton();
           }
         }
       } else {
@@ -2175,7 +2375,7 @@ async function initCloudFromSeed() {
       matches: seeded,
       scoring: defaultScoring(),
       mystic: defaultMystic(),
-      settings: { tickerSpeedSec: clampTickerSpeed(tickerSpeedSec || 60) },
+      settings: { tickerSpeedSec: clampTickerSpeed(tickerSpeedSec || 60), autoSync: false },
       updatedAt: serverTimestamp(),
       updatedAtClient: new Date().toISOString(),
       updatedBy: auth.currentUser.email || "admin"
@@ -2252,8 +2452,8 @@ document.getElementById("btn-init-cloud").onclick = initCloudFromSeed;
 document.getElementById("btn-sync-live").onclick = () => syncLiveScores({ silent: false });
 document.getElementById("btn-auto-sync").onclick = () => {
   if (!isAdmin || !cloudReady) { toast("Admin + cloud required", true); return; }
-  setAutoSync(!autoSyncOn);
-  toast(autoSyncOn ? "Auto-sync ON (every 3 min)" : "Auto-sync OFF");
+  setAutoSync(!autoSyncOn, { persist: true });
+  toast(autoSyncOn ? "Auto-sync ON (saved · every 3 min)" : "Auto-sync OFF (saved)");
 };
 document.getElementById("btn-reload").onclick = () => { renderAll(); toast("Refreshed"); };
 document.getElementById("btn-save-rules").onclick = saveRulesAndMystic;
