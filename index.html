@@ -1402,23 +1402,94 @@ function renderUpcoming() {
 
 
 // ---------- V2 polish UI helpers ----------
+// Canonical kickoffs in UTC (absolute). Display uses each visitor's local timezone.
+// France–Spain SF: 14 Jul 2026, 2:00pm US Central (Arlington) = 19:00 UTC = 01:00am BDT (15 Jul)
+// England–Argentina SF: 15 Jul 2026, 3:00pm US Eastern (Atlanta) = 19:00 UTC = 01:00am BDT (16 Jul)
+// 3rd place / Final: provisional UTC anchors (update if schedule shifts)
+const KICKOFF_UTC = {
+  "SF|France|Spain": "2026-07-14T19:00:00.000Z",
+  "SF|England|Argentina": "2026-07-15T19:00:00.000Z",
+  "3RD": "2026-07-18T21:00:00.000Z",
+  "F": "2026-07-19T19:00:00.000Z"
+};
+function kickoffKey(stage, a, b) {
+  if (stage === "SF" && a && b) return "SF|" + [a, b].sort().join("|");
+  // fixed pairs for known semis (order-independent lookup below)
+  return stage;
+}
+function resolveKickoffISO(stage, a, b) {
+  if (stage === "SF") {
+    const pair = [a, b].slice().sort().join("|");
+    // try both known SF keys
+    if ((a === "France" && b === "Spain") || (a === "Spain" && b === "France")) {
+      return KICKOFF_UTC["SF|France|Spain"];
+    }
+    if ((a === "England" && b === "Argentina") || (a === "Argentina" && b === "England")) {
+      return KICKOFF_UTC["SF|England|Argentina"];
+    }
+    // generic SF fallback: none
+    return null;
+  }
+  return KICKOFF_UTC[stage] || null;
+}
+function formatLocalKickoff(iso) {
+  if (!iso) return { when: "Time TBD", tz: "" };
+  const d = new Date(iso);
+  if (Number.isNaN(+d)) return { when: "Time TBD", tz: "" };
+  // Visitor's local timezone automatically
+  const when = d.toLocaleString(undefined, {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit"
+  });
+  let tz = "";
+  try {
+    tz = d.toLocaleTimeString(undefined, { timeZoneName: "short" }).split(" ").pop() || "";
+    // better tz name
+    const parts = new Intl.DateTimeFormat(undefined, { timeZoneName: "short" }).formatToParts(d);
+    const tzPart = parts.find(p => p.type === "timeZoneName");
+    if (tzPart) tz = tzPart.value;
+  } catch (e) {}
+  return { when, tz };
+}
 function getSuggestedFixturesUI() {
   const out = [];
   const sfPairs = [
-    {stage:"SF", date:"Jul 14", a:"France", b:"Spain", kickoff:"2026-07-14T20:00:00+06:00"},
-    {stage:"SF", date:"Jul 15", a:"England", b:"Argentina", kickoff:"2026-07-15T21:00:00+06:00"},
+    { stage: "SF", date: "Jul 14", a: "France", b: "Spain" },
+    { stage: "SF", date: "Jul 15", a: "England", b: "Argentina" },
   ];
   for (const p of sfPairs) {
-    const done = matches.some(m => m.stage==="SF" && resolveWinner(m) && new Set([m.teamA,m.teamB]).has(p.a) && new Set([m.teamA,m.teamB]).has(p.b));
-    if (!done) out.push(p);
+    const done = matches.some(m => m.stage === "SF" && resolveWinner(m) && new Set([m.teamA, m.teamB]).has(p.a) && new Set([m.teamA, m.teamB]).has(p.b));
+    if (!done) {
+      out.push({
+        ...p,
+        kickoff: resolveKickoffISO(p.stage, p.a, p.b)
+      });
+    }
   }
-  const sfDone = matches.filter(m => m.stage==="SF" && resolveWinner(m));
+  const sfDone = matches.filter(m => m.stage === "SF" && resolveWinner(m));
   if (sfDone.length === 2) {
-    const W=[], L=[];
-    for (const m of sfDone) { const w=resolveWinner(m); W.push(w); L.push(m.teamA===w?m.teamB:m.teamA); }
-    if (!matches.some(m => m.stage==="3RD" && resolveWinner(m))) out.push({stage:"3RD", date:"Jul 18", a:L[0], b:L[1], kickoff:"2026-07-18T22:00:00+06:00"});
-    if (!matches.some(m => m.stage==="F" && resolveWinner(m))) out.push({stage:"F", date:"Jul 19", a:W[0], b:W[1], kickoff:"2026-07-19T20:00:00+06:00"});
+    const W = [], L = [];
+    for (const m of sfDone) {
+      const w = resolveWinner(m);
+      W.push(w);
+      L.push(m.teamA === w ? m.teamB : m.teamA);
+    }
+    if (!matches.some(m => m.stage === "3RD" && resolveWinner(m))) {
+      out.push({ stage: "3RD", date: "Jul 18", a: L[0], b: L[1], kickoff: resolveKickoffISO("3RD") });
+    }
+    if (!matches.some(m => m.stage === "F" && resolveWinner(m))) {
+      out.push({ stage: "F", date: "Jul 19", a: W[0], b: W[1], kickoff: resolveKickoffISO("F") });
+    }
   }
+  // Sort by actual kickoff time so "next" is correct worldwide
+  out.sort((x, y) => {
+    const tx = x.kickoff ? +new Date(x.kickoff) : Infinity;
+    const ty = y.kickoff ? +new Date(y.kickoff) : Infinity;
+    return tx - ty;
+  });
   return out;
 }
 function renderNextMatchHero() {
@@ -1433,20 +1504,41 @@ function renderNextMatchHero() {
     if (cd) cd.innerHTML = "";
     return;
   }
-  const n = fixtures[0];
+  // Prefer the soonest future kickoff; if all past, show first unfinished
+  const now = Date.now();
+  let n = fixtures.find(f => f.kickoff && +new Date(f.kickoff) > now - 3 * 3600 * 1000) || fixtures[0];
   title.innerHTML = `${flag(n.a)}${esc(n.a)} <span style="color:var(--muted)">vs</span> ${flag(n.b)}${esc(n.b)}`;
-  if (sub) sub.textContent = `${n.stage} · ${n.date} · ${OWNER[n.a]||"?"} vs ${OWNER[n.b]||"?"}`;
+  const local = formatLocalKickoff(n.kickoff);
+  const owners = `${OWNER[n.a] || "?"} vs ${OWNER[n.b] || "?"}`;
+  if (sub) {
+    const tzBit = local.tz
+      ? (' <span style="color:var(--muted)">(' + esc(local.tz) + ' · your local time)</span>')
+      : ' <span style="color:var(--muted)">(your local time)</span>';
+    sub.innerHTML = esc(n.stage) + ' · <strong>' + esc(local.when) + '</strong>' + tzBit + ' · ' + esc(owners);
+  }
   const target = n.kickoff ? new Date(n.kickoff) : null;
   function tick() {
     if (!cd) return;
-    if (!target || Number.isNaN(+target)) { cd.innerHTML = `<div class="cd-unit"><b>—</b><span>TBD</span></div>`; return; }
-    let ms = target - new Date();
-    if (ms < 0) { cd.innerHTML = `<div class="cd-unit"><b>Soon</b><span>kickoff</span></div>`; return; }
-    const d=Math.floor(ms/86400000); ms%=86400000;
-    const h=Math.floor(ms/3600000); ms%=3600000;
-    const m=Math.floor(ms/60000); ms%=60000;
-    const s=Math.floor(ms/1000);
-    cd.innerHTML = [["Days",d],["Hrs",h],["Min",m],["Sec",s]].map(([lab,val])=>`<div class="cd-unit"><b>${val}</b><span>${lab}</span></div>`).join("");
+    if (!target || Number.isNaN(+target)) {
+      cd.innerHTML = `<div class="cd-unit"><b>—</b><span>TBD</span></div>`;
+      return;
+    }
+    let ms = target.getTime() - Date.now();
+    if (ms <= 0) {
+      // Within kickoff window
+      if (ms > -3 * 3600 * 1000) {
+        cd.innerHTML = `<div class="cd-unit"><b>Live</b><span>window</span></div>`;
+      } else {
+        cd.innerHTML = `<div class="cd-unit"><b>Done</b><span>kickoff</span></div>`;
+      }
+      return;
+    }
+    const d = Math.floor(ms / 86400000); ms %= 86400000;
+    const h = Math.floor(ms / 3600000); ms %= 3600000;
+    const m = Math.floor(ms / 60000); ms %= 60000;
+    const s = Math.floor(ms / 1000);
+    cd.innerHTML = [["Days", d], ["Hrs", h], ["Min", m], ["Sec", s]]
+      .map(([lab, val]) => `<div class="cd-unit"><b>${val}</b><span>${lab}</span></div>`).join("");
   }
   tick();
   if (countdownTimer) clearInterval(countdownTimer);
