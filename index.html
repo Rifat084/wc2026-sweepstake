@@ -585,7 +585,7 @@ tr.flash td{animation:rowFlash 1s ease}@keyframes rowFlash{0%{background:rgba(52
         </div>
         <div class="help">
           First time: sign in → <strong>Initialize cloud from seed</strong>.<br>
-          Then use <strong>Sync live scores</strong> or turn <strong>Auto-sync ON</strong> (saved for your admin account across refresh). Auto-sync needs this admin browser session open to pull finished results into the cloud. Live scores on the home card update for everyone every minute from the public feed.
+          Then use <strong>Sync live scores</strong> or turn <strong>Auto-sync ON</strong> (saved for your admin account across refresh). Auto-sync needs this admin browser session open. The public feed rate-limits heavy traffic, so the site caches responses (~90s) and backs off automatically on HTTP 429. Live scores refresh about every 2 minutes using that cache.
         </div>
         <h2 style="margin-top:18px">Suggested fixtures</h2>
         <div id="upcoming"></div>
@@ -1855,7 +1855,9 @@ function maybeConfettiUI(champion){
 // Source: https://worldcup26.ir/get/games (free, no key, CORS *)
 // Admin-only write to Firestore after sync.
 const LIVE_FEED_URL = "https://worldcup26.ir/get/games";
-const AUTO_SYNC_MS = 3 * 60 * 1000; // 3 minutes
+const AUTO_SYNC_MS = 5 * 60 * 1000; // 5 minutes — write finished results less often
+const FEED_MIN_INTERVAL_MS = 90 * 1000; // never hit public feed more than once per 90s
+const FEED_BACKOFF_MAX_MS = 15 * 60 * 1000; // up to 15 min after repeated 429s
 
 const TEAM_ALIAS = {
   "United States": "USA",
@@ -1899,9 +1901,16 @@ let autoSyncTimer = null;
 let autoSyncDesired = false; // persisted preference (Firebase); restored after admin login
 let lastSyncAt = null;
 let lastSyncSummary = "";
-let liveFeedCache = []; // raw/normalized live+upcoming games from public feed
+let liveFeedCache = []; // normalized lite games for UI (live scores)
+let liveFeedRawGames = []; // last successful raw games array
 let livePollTimer = null;
-const LIVE_POLL_MS = 60 * 1000; // viewers/admin: refresh live scores every 60s
+let feedInflight = null; // dedupe concurrent fetches
+let feedLastSuccessAt = 0;
+let feedLastAttemptAt = 0;
+let feedBackoffUntil = 0;
+let feedConsecutiveErrors = 0;
+let feedLastError = "";
+const LIVE_POLL_MS = 2 * 60 * 1000; // UI live-score poll every 2 min (uses cache if fresh)
 
 function normTeam(name) {
   if (!name || name === "None" || name === "null") return null;
@@ -2108,16 +2117,103 @@ function setLiveFeedStatus(text) {
   if (el) el.textContent = text;
 }
 
-async function fetchLiveFeedGames() {
-  const res = await fetch(LIVE_FEED_URL, { cache: "no-store" });
-  if (!res.ok) throw new Error("Feed HTTP " + res.status);
-  const data = await res.json();
-  const games = Array.isArray(data) ? data : (data.games || data.data || []);
-  if (!Array.isArray(games)) throw new Error("Unexpected feed shape");
-  return games;
+function feedWaitMs() {
+  const now = Date.now();
+  if (now < feedBackoffUntil) return feedBackoffUntil - now;
+  const since = now - feedLastSuccessAt;
+  if (feedLastSuccessAt && since < FEED_MIN_INTERVAL_MS) return FEED_MIN_INTERVAL_MS - since;
+  return 0;
 }
 
-async function syncLiveScores({ silent } = {}) {
+function markFeedSuccess() {
+  feedLastSuccessAt = Date.now();
+  feedConsecutiveErrors = 0;
+  feedBackoffUntil = 0;
+  feedLastError = "";
+}
+
+function markFeedError(err, retryAfterSec) {
+  feedConsecutiveErrors += 1;
+  feedLastError = (err && err.message) ? err.message : String(err || "feed error");
+  let backoff = Math.min(
+    FEED_BACKOFF_MAX_MS,
+    Math.max(FEED_MIN_INTERVAL_MS, (retryAfterSec ? retryAfterSec * 1000 : 0) || (60 * 1000 * Math.pow(2, Math.min(feedConsecutiveErrors, 4))))
+  );
+  // 429: start at least 3 minutes
+  if (/429/.test(feedLastError)) backoff = Math.max(backoff, 3 * 60 * 1000);
+  feedBackoffUntil = Date.now() + backoff;
+  return backoff;
+}
+
+/**
+ * Shared rate-limited feed fetch.
+ * - dedupes concurrent calls
+ * - reuses last success for FEED_MIN_INTERVAL_MS
+ * - backs off hard on HTTP 429
+ */
+async function fetchLiveFeedGames({ force = false } = {}) {
+  const now = Date.now();
+
+  // Serve memory cache if fresh enough
+  if (!force && liveFeedRawGames.length && (now - feedLastSuccessAt) < FEED_MIN_INTERVAL_MS) {
+    return liveFeedRawGames;
+  }
+
+  // During backoff, return cache if we have it; otherwise wait/throw softly
+  if (!force && now < feedBackoffUntil) {
+    if (liveFeedRawGames.length) return liveFeedRawGames;
+    const wait = Math.ceil((feedBackoffUntil - now) / 1000);
+    throw new Error(`Feed cooling down (${wait}s) after rate limit`);
+  }
+
+  // Dedupe in-flight
+  if (feedInflight) return feedInflight;
+
+  feedLastAttemptAt = now;
+  feedInflight = (async () => {
+    try {
+      // Prefer normal HTTP cache (feed sends max-age=30). Avoid no-store hammering.
+      const res = await fetch(LIVE_FEED_URL, {
+        method: "GET",
+        // force bypasses browser cache once; normal polls allow CDN/browser cache
+        cache: force ? "reload" : "default",
+        headers: { "Accept": "application/json" }
+      });
+      if (res.status === 429) {
+        const ra = parseInt(res.headers.get("Retry-After") || "", 10);
+        const backoff = markFeedError(new Error("Feed HTTP 429"), Number.isFinite(ra) ? ra : 180);
+        const secs = Math.ceil(backoff / 1000);
+        // Prefer stale cache over hard fail
+        if (liveFeedRawGames.length) {
+          setLiveFeedStatus(`Rate limited · using cached feed · retry ~${secs}s`);
+          return liveFeedRawGames;
+        }
+        throw new Error(`Feed HTTP 429 · retry in ~${secs}s`);
+      }
+      if (!res.ok) {
+        markFeedError(new Error("Feed HTTP " + res.status));
+        if (liveFeedRawGames.length) {
+          setLiveFeedStatus(`Feed error ${res.status} · using cache`);
+          return liveFeedRawGames;
+        }
+        throw new Error("Feed HTTP " + res.status);
+      }
+      const data = await res.json();
+      const games = Array.isArray(data) ? data : (data.games || data.data || []);
+      if (!Array.isArray(games)) throw new Error("Unexpected feed shape");
+      liveFeedRawGames = games;
+      liveFeedCache = games.map(normalizeFeedGameLite).filter(Boolean);
+      markFeedSuccess();
+      return games;
+    } finally {
+      feedInflight = null;
+    }
+  })();
+
+  return feedInflight;
+}
+
+async function syncLiveScores({ silent = false, force = false } = {}) {
   if (!isAdmin) {
     if (!silent) toast("Sign in as admin to sync", true);
     return;
@@ -2126,19 +2222,31 @@ async function syncLiveScores({ silent } = {}) {
     if (!silent) toast("Initialize cloud from seed first", true);
     return;
   }
-  setLiveFeedStatus("Fetching…");
+
+  // Respect cooldown unless user explicitly clicks Sync (force)
+  const wait = force ? 0 : feedWaitMs();
+  if (wait > 0 && liveFeedRawGames.length) {
+    // Use cache for auto-sync instead of hitting network
+    setLiveFeedStatus(`Using cached feed · next fetch ~${Math.ceil(wait/1000)}s`);
+  } else if (wait > 0 && !liveFeedRawGames.length) {
+    setLiveFeedStatus(`Waiting ${Math.ceil(wait/1000)}s before feed fetch…`);
+    if (!silent) toast(`Feed is rate-limited. Try again in ~${Math.ceil(wait/1000)}s`, true);
+    return;
+  } else {
+    setLiveFeedStatus(force ? "Fetching feed…" : "Fetching…");
+  }
+
   try {
-    const games = await fetchLiveFeedGames();
+    const games = await fetchLiveFeedGames({ force });
     const mapped = [];
-    let skipped = 0;
     for (const g of games) {
       const m = mapFeedGame(g);
-      if (m) mapped.push(m); else skipped++;
+      if (m) mapped.push(m);
     }
-    const { next, updated, added, unchanged } = mergeFeedIntoMatches(matches, mapped);
+    const { next, updated, added } = mergeFeedIntoMatches(matches, mapped);
     if (updated === 0 && added === 0) {
       lastSyncAt = new Date().toISOString();
-      lastSyncSummary = `No changes (${mapped.length} finished in feed)`;
+      lastSyncSummary = `No changes (${mapped.length} finished)`;
       setLiveFeedStatus(lastSyncSummary + " · " + new Date().toLocaleTimeString());
       if (!silent) toast("Already up to date");
       return;
@@ -2150,8 +2258,9 @@ async function syncLiveScores({ silent } = {}) {
     if (!silent) toast(`Live sync: ${added} added, ${updated} updated`);
   } catch (e) {
     console.error(e);
-    setLiveFeedStatus("Error: " + (e.message || "failed"));
-    if (!silent) toast(e.message || "Live sync failed", true);
+    const msg = e.message || "failed";
+    setLiveFeedStatus("Error: " + msg);
+    if (!silent) toast(msg, true);
   }
 }
 
@@ -2177,7 +2286,7 @@ function startAutoSyncTimer() {
   autoSyncTimer = setInterval(() => {
     if (isAdmin && cloudReady && autoSyncOn) syncLiveScores({ silent: true });
   }, AUTO_SYNC_MS);
-  setLiveFeedStatus("Auto-sync every 3 min");
+  setLiveFeedStatus("Auto-sync every 5 min (rate-limit safe)");
 }
 async function persistAutoSyncSetting(on) {
   if (!isAdmin || !cloudReady || !db || !window.__fb || !auth?.currentUser) return;
@@ -2223,20 +2332,35 @@ function restoreAutoSyncFromSettings() {
 
 
 
-async function refreshLiveFeedCache({ silent } = {}) {
+async function refreshLiveFeedCache({ silent = true, force = false } = {}) {
   try {
-    const games = await fetchLiveFeedGames();
+    // During backoff with cache, skip network entirely
+    if (!force && Date.now() < feedBackoffUntil && liveFeedRawGames.length) {
+      liveFeedCache = liveFeedRawGames.map(normalizeFeedGameLite).filter(Boolean);
+      try { renderNextMatchHero(); } catch (e) {}
+      return;
+    }
+    const games = await fetchLiveFeedGames({ force });
     liveFeedCache = games.map(normalizeFeedGameLite).filter(Boolean);
-    // update next-match live UI without full recompute if possible
     try { renderNextMatchHero(); } catch (e) {}
     try { renderBracketUI(); } catch (e) {}
+    if (!feedLastError && !autoSyncOn) {
+      // don't clobber auto-sync status lines unnecessarily
+      const liveN = liveFeedCache.filter(g => g.live).length;
+      if (liveN) setLiveFeedStatus(`Live matches: ${liveN} · updated ${new Date().toLocaleTimeString()}`);
+    }
   } catch (e) {
     if (!silent) console.warn("live feed poll failed", e);
+    if (liveFeedRawGames.length) {
+      liveFeedCache = liveFeedRawGames.map(normalizeFeedGameLite).filter(Boolean);
+      try { renderNextMatchHero(); } catch (err) {}
+    }
   }
 }
 function startLiveScorePolling() {
   if (livePollTimer) return;
-  refreshLiveFeedCache({ silent: true });
+  // initial fetch slightly delayed so page can paint first
+  setTimeout(() => refreshLiveFeedCache({ silent: true }), 1500);
   livePollTimer = setInterval(() => refreshLiveFeedCache({ silent: true }), LIVE_POLL_MS);
 }
 
@@ -2449,11 +2573,11 @@ document.getElementById("m-team-a").onchange = updateWinnerOptions;
 document.getElementById("m-team-b").onchange = updateWinnerOptions;
 document.getElementById("btn-record").onclick = recordMatch;
 document.getElementById("btn-init-cloud").onclick = initCloudFromSeed;
-document.getElementById("btn-sync-live").onclick = () => syncLiveScores({ silent: false });
+document.getElementById("btn-sync-live").onclick = () => syncLiveScores({ silent: false, force: true });
 document.getElementById("btn-auto-sync").onclick = () => {
   if (!isAdmin || !cloudReady) { toast("Admin + cloud required", true); return; }
   setAutoSync(!autoSyncOn, { persist: true });
-  toast(autoSyncOn ? "Auto-sync ON (saved · every 3 min)" : "Auto-sync OFF (saved)");
+  toast(autoSyncOn ? "Auto-sync ON (saved · every 5 min)" : "Auto-sync OFF (saved)");
 };
 document.getElementById("btn-reload").onclick = () => { renderAll(); toast("Refreshed"); };
 document.getElementById("btn-save-rules").onclick = saveRulesAndMystic;
@@ -2549,5 +2673,5 @@ applyTickerSpeed();
 renderAll();
 initFirebase();
 </script>
-</body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a1d4a5a6eaa733a4',t:'MTc4NDQxMDg1MA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
