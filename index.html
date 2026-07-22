@@ -216,6 +216,234 @@
   .mystic-pill.yes { background: rgba(46,204,113,0.2); color: var(--good); }
   .mystic-pill.no { background: rgba(231,76,60,0.15); color: var(--bad); }
   .mystic-pill.wait { background: rgba(243,156,18,0.15); color: var(--warn); }
+
+  /* Champion ribbon */
+  .champion-ribbon {
+    display: inline-block;
+    background: linear-gradient(135deg, #f5d76e, #d4af37);
+    color: #1a1505;
+    font-size: 9px;
+    font-weight: 800;
+    padding: 1px 7px;
+    border-radius: 3px;
+    margin-left: 6px;
+    letter-spacing: .5px;
+    text-transform: uppercase;
+    vertical-align: middle;
+    box-shadow: 0 1px 4px rgba(212,175,55,.35);
+  }
+
+  /* Larger type + more card padding on desktop ("client portal" feel) */
+  @media (min-width: 1000px) {
+    body { font-size: 15px; }
+    .card { padding: 22px 26px; margin-top: 18px; border-radius: 14px; }
+    .roster-card { padding: 16px 20px; }
+    .hero-card { padding: 20px 24px; }
+    .rule-box { padding: 16px 20px; }
+    table { font-size: 14px; }
+    th, td { padding: 11px 12px; }
+    .match-item { padding: 12px 16px; font-size: 14px; }
+    .team-line { padding: 7px 0; font-size: 13px; }
+    .tab { padding: 10px 16px; font-size: 13px; }
+    h2 { font-size: 13px !important; }
+    .podium-card .ppts { font-size: 30px !important; }
+  }
+
+  /* Print / PDF styles */
+  @media print {
+    body { background: white !important; color: #111 !important; font-size: 11pt; }
+    header, #ticker, .tabs, .hero-grid, .sf-banner, .btn-primary, .btn-secondary,
+    .btn-danger, #btn-share, #btn-open-admin-login, .countdown, #view-bracket,
+    #view-compare, #view-rosters, #view-matches, #view-rules, #view-admin,
+    .admin-login-modal, .modal, #share-modal, .match-item .pts-earned,
+    .tab, .filters, .help, .panel-view:not(.active) { display: none !important; }
+    .panel-view.active, .card, .roster-card { display: block !important; }
+    .card, .roster-card, .rule-box, .bracket-match {
+      background: white !important; border: 1px solid #ccc !important;
+      color: #111 !important; break-inside: avoid;
+    }
+    .card h2, .roster-card h3, th { color: #333 !important; }
+    td { color: #111 !important; border-bottom: 1px solid #ddd !important; }
+    .pts { color: #2563eb !important; }
+    .rank { background: #eee !important; color: #333 !important; }
+    .rank.gold { background: #f5d76e !important; color: #1a1505 !important; }
+    .rank.silver { background: #c0c4d0 !important; color: #0b1020 !important; }
+    .rank.bronze { background: #cd7f32 !important; color: #fff !important; }
+    .podium { display: flex !important; justify-content: center !important; gap: 16px !important; }
+    .podium-card { background: white !important; border: 1px solid #ccc !important; color: #111 !important; }
+    .podium-card .ppts { color: #2563eb !important; }
+    .podium-card .psub { color: #666 !important; }
+    .champion-ribbon { background: #f5d76e !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+    .container { max-width: 100% !important; padding: 0 !important; }
+    @page { margin: 0.6in; }
+  }
+
+
+  @media (max-width: 600px) {
+    .spark-th, .spark-td { display: none !important; }
+    .team-journey { gap: 0; }
+    .jn-dot { font-size: 7px; padding: 1px 3px; min-width: 18px; }
+    .jn-line { width: 6px; }
+  }
+
+  /* ── Mobile responsive fixes ── */
+  @media (max-width: 600px) {
+    header { padding: 10px 12px; }
+    header h1 { font-size: 14px; }
+    .container { padding: 0 8px 20px; }
+    .tabs { padding: 8px 8px 0; gap: 3px; }
+    .tab { padding: 7px 8px; font-size: 11px; border-radius: 6px 6px 0 0; }
+    .card { padding: 12px 10px; margin-top: 10px; border-radius: 10px; }
+    .hero-card { padding: 12px; min-height: auto; }
+    .hero-card .big { font-size: 16px; }
+    .hero-card .sub { font-size: 11px; }
+    .hero-card h3 { font-size: 10px; }
+    .roster-card { padding: 10px; }
+    .roster-grid { grid-template-columns: 1fr; }
+    .match-item { grid-template-columns: 54px 1fr auto; gap: 6px; padding: 8px 10px; font-size: 12px; }
+    .match-item .meta { padding-right: 6px; }
+    .match-item .meta .date { font-size: 9px; }
+    table { font-size: 11px; }
+    th, td { padding: 6px 5px; }
+    th { font-size: 9px; letter-spacing: 0.5px; }
+    .rank { width: 22px; height: 22px; font-size: 10px; }
+    .podium { grid-template-columns: 1fr !important; gap: 8px; }
+    .podium-card .ppts { font-size: 22px; }
+    .podium-card .pname { font-size: 15px; }
+    .podium-card .psub { font-size: 10px; }
+    .pulse-stat { gap: 8px; }
+    .pulse-stat .ps b { font-size: 16px; }
+    .pulse-stat .ps span { font-size: 9px; }
+    .sf-banner { padding: 10px; font-size: 12px; }
+    .sf-banner div[style*="font-size:18px"] { font-size: 14px !important; }
+    .sf-banner div[style*="gap:28px"] { gap: 10px !important; font-size: 11px !important; }
+    .bracket { grid-template-columns: 1fr !important; gap: 10px; }
+    .bracket-final { padding: 12px; }
+    .bracket-match { padding: 8px; }
+    .bracket-side { padding: 6px 8px; font-size: 12px; }
+    .bracket-score { font-size: 14px; min-width: 28px; }
+    .team-name { font-size: 12px; }
+    .owner-label { font-size: 9px; }
+    .compare-grid { grid-template-columns: 1fr; gap: 8px; }
+    .compare-vs { font-size: 16px; padding: 4px; }
+    .countdown { gap: 4px; }
+    .cd-unit b { font-size: 16px; }
+    .cd-unit span { font-size: 8px; }
+    .rules-grid { grid-template-columns: 1fr; }
+    .rule-box { padding: 10px; }
+    .name-chip { font-size: 12px; }
+    .name-chip strong { font-size: 12px; }
+    .avatar-sm { width: 22px; height: 22px; font-size: 10px; }
+    .mystic-pill { font-size: 9px; padding: 2px 5px; }
+    .champion-ribbon { font-size: 8px; padding: 1px 5px; }
+    .filters { gap: 3px; }
+    .filters button { padding: 4px 6px; font-size: 9px; }
+    .grid-2 { grid-template-columns: 1fr; }
+    .detail-line { grid-template-columns: 50px 38px 1fr 50px 28px; gap: 4px; font-size: 10px; }
+    #ticker { font-size: 11px; padding: 6px 0; }
+    .flag-img { width: 16px; height: 12px; }
+    /* Standings table: horizontal scroll on small screens */
+    .card:has(#standings-body) { overflow-x: auto; }
+    .card:has(#breakdown-body) { overflow-x: auto; }
+  }
+  @media (max-width: 380px) {
+    header h1 { font-size: 12px; }
+    .tab { padding: 5px 6px; font-size: 10px; }
+    .hero-card .big { font-size: 14px; }
+    table { font-size: 10px; }
+    th, td { padding: 5px 3px; }
+  }
+
+  /* ── Team journey timeline ── */
+  .team-journey {
+    display: flex; align-items: center; gap: 0;
+    margin-top: 5px; flex-wrap: nowrap; overflow-x: auto;
+  }
+  .jn-dot {
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 8px; font-weight: 800; letter-spacing: .3px;
+    padding: 2px 5px; border-radius: 4px; white-space: nowrap;
+    min-width: 24px; text-align: center; flex-shrink: 0;
+  }
+  .jn-line {
+    display: inline-block; width: 10px; height: 2px; flex-shrink: 0;
+    background: rgba(96,165,250,0.2); vertical-align: middle;
+  }
+  .jn-gs { background: rgba(96,165,250,0.15); color: #8ab4f8; }
+  .jn-win { background: rgba(52,211,153,0.2); color: #34d399; }
+  .jn-loss { background: rgba(248,113,113,0.18); color: #f87171; }
+  .jn-draw { background: rgba(251,191,36,0.15); color: #fbbf24; }
+  .jn-future { background: rgba(143,163,191,0.08); color: rgba(143,163,191,0.35); }
+
+  /* ── Sparkline ── */
+  .sparkline { display: inline-block; vertical-align: middle; }
+  .spark-td { padding: 4px 6px !important; }
+  .spark-th { min-width: 90px; }
+
+  /* ── Victory reveal animation ── */
+  @keyframes victoryPop {
+    0%   { opacity: 0; transform: translateY(30px) scale(0.92); }
+    60%  { opacity: 1; transform: translateY(-6px) scale(1.02); }
+    80%  { transform: translateY(2px) scale(0.99); }
+    100% { opacity: 1; transform: translateY(0) scale(1); }
+  }
+  .victory-hidden { opacity: 0; transform: translateY(30px) scale(0.92); }
+  .victory-reveal {
+    animation: victoryPop 0.7s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    animation-delay: var(--v-delay, 0ms);
+  }
+
+  /* ── Glass-morphism extras ── */
+  .sf-banner {
+    backdrop-filter: blur(14px) saturate(1.3) !important;
+    -webkit-backdrop-filter: blur(14px) saturate(1.3) !important;
+  }
+  .match-item {
+    backdrop-filter: blur(10px) !important;
+    -webkit-backdrop-filter: blur(10px) !important;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+  }
+  .match-item:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 12px 36px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.05) !important;
+  }
+  .roster-card {
+    backdrop-filter: blur(12px) saturate(1.3) !important;
+    -webkit-backdrop-filter: blur(12px) saturate(1.3) !important;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+  .roster-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 16px 48px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.05) !important;
+  }
+  .podium-card {
+    transition: transform 0.25s cubic-bezier(.34,1.56,.64,1), box-shadow 0.25s ease;
+  }
+  .podium-card:hover {
+    transform: translateY(-4px) scale(1.02);
+    box-shadow: 0 20px 56px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.06) !important;
+  }
+  .tab {
+    transition: all 0.2s ease;
+  }
+  .tab:hover {
+    transform: translateY(-1px);
+  }
+
+  /* ── Subtle card shine effect ── */
+  .hero-card::before, .podium-card::before {
+    content: "";
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.08) 50%, transparent);
+    border-radius: 14px 14px 0 0;
+    pointer-events: none;
+  }
+  .hero-card, .podium-card { position: relative; overflow: hidden; }
+
+  /* ── Sparkline SVG gradient (defined in-page) ── */
 </style>
 
 <style id="simply-us-tax-brand">
@@ -261,10 +489,17 @@ html, body {
 }
 body::before { opacity: 0.03 !important; }
 header {
-  background: rgba(5,11,24,0.88) !important;
-  border-bottom: 1px solid var(--border) !important;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.25) !important;
-  backdrop-filter: blur(12px) !important;
+  background: linear-gradient(270deg, rgba(5,11,24,0.92), rgba(4,60,100,0.55), rgba(12,30,54,0.88), rgba(4,80,130,0.45), rgba(5,11,24,0.92)) !important;
+  background-size: 400% 100% !important;
+  animation: headerGlow 12s ease-in-out infinite !important;
+  border-bottom: 1px solid rgba(96,165,250,0.18) !important;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.35), inset 0 -1px 0 rgba(96,165,250,0.1) !important;
+  backdrop-filter: blur(16px) saturate(1.3) !important;
+  -webkit-backdrop-filter: blur(16px) saturate(1.3) !important;
+}
+@keyframes headerGlow {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
 }
 header h1 {
   background: linear-gradient(90deg, #dbeafe, #7dd3fc 50%, #93c5fd) !important;
@@ -304,14 +539,18 @@ header > div > div[style*="font-size:11px"] { color: #8fa3bf !important; }
   box-shadow: 0 6px 16px rgba(4,126,182,0.28) !important;
 }
 .card, .hero-card, .roster-card, .rule-box, .compare-card, .bracket-match, .admin-box, .match-item, .podium-card, .m-card {
-  background: rgba(15, 39, 68, 0.92) !important;
-  border: 1px solid var(--border) !important;
-  box-shadow: var(--shadow) !important;
+  background: rgba(15, 39, 68, 0.72) !important;
+  border: 1px solid rgba(96,165,250,0.14) !important;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.04) !important;
   color: var(--text) !important;
+  backdrop-filter: blur(16px) saturate(1.4) !important;
+  -webkit-backdrop-filter: blur(16px) saturate(1.4) !important;
 }
 .hero-card, .hero-card.next {
-  background: linear-gradient(145deg, rgba(4,126,182,0.16), rgba(12,30,54,0.95)) !important;
-  border: 1px solid var(--border) !important;
+  background: linear-gradient(145deg, rgba(4,126,182,0.14), rgba(12,30,54,0.65)) !important;
+  border: 1px solid rgba(96,165,250,0.16) !important;
+  backdrop-filter: blur(20px) saturate(1.5) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(1.5) !important;
 }
 .hero-card h3, .card h2, .admin-box h3, .rule-box h4 {
   color: #60a5fa !important;
@@ -361,9 +600,11 @@ header > div > div[style*="font-size:11px"] { color: #8fa3bf !important; }
   -webkit-text-fill-color: #7dd3fc !important;
 }
 .podium-card.p1 {
-  background: linear-gradient(180deg, rgba(4,126,182,0.28), rgba(12,30,54,0.95)) !important;
-  border-color: rgba(96,165,250,0.4) !important;
-  box-shadow: 0 16px 40px rgba(4,126,182,0.18) !important;
+  background: linear-gradient(180deg, rgba(4,126,182,0.22), rgba(12,30,54,0.55)) !important;
+  border-color: rgba(96,165,250,0.35) !important;
+  box-shadow: 0 16px 40px rgba(4,126,182,0.22), inset 0 1px 0 rgba(255,255,255,0.06) !important;
+  backdrop-filter: blur(24px) saturate(1.6) !important;
+  -webkit-backdrop-filter: blur(24px) saturate(1.6) !important;
 }
 .podium-card .pname, .podium-card .place { color: var(--text) !important; }
 .podium-card .psub, .hero-card .sub, .help, .status-line, .locked-note, .empty, label {
@@ -426,9 +667,11 @@ input:focus, select:focus {
   color: var(--muted);
 }
 .bracket-final {
-  background: linear-gradient(180deg, #1D2B45, #0f2744) !important;
-  border-color: rgba(96,165,250,0.3) !important;
+  background: linear-gradient(180deg, rgba(29,43,69,0.7), rgba(15,39,68,0.65)) !important;
+  border-color: rgba(96,165,250,0.25) !important;
   color: #fff !important;
+  backdrop-filter: blur(20px) saturate(1.5) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(1.5) !important;
 }
 .bracket-final div { color: inherit; }
 .bracket-side.win { background: rgba(52,211,153,0.1) !important; }
@@ -499,6 +742,15 @@ input:focus, select:focus {
 
 </head>
 <body>
+
+<svg style="position:absolute;width:0;height:0;overflow:hidden" aria-hidden="true">
+  <defs>
+    <linearGradient id="sparkGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#60a5fa" stop-opacity="0.5"/>
+      <stop offset="100%" stop-color="#60a5fa" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+</svg>
 <header>
   <div style="display:flex;align-items:center;gap:12px;min-width:0">
     <img class="header-logo" src="https://simplyustax.co.uk/wp-content/uploads/2023/02/logo.png" alt="Simply US Tax" width="140" height="42" />
@@ -519,10 +771,11 @@ input:focus, select:focus {
     </span>
   </div>
 </header>
-<div id="ticker" style="overflow:hidden;white-space:nowrap;border-bottom:1px solid var(--border);background:rgba(15,39,68,.55);font-size:12px;color:var(--muted);padding:8px 0">
+<div id="ticker" style="overflow:hidden;white-space:nowrap;border-bottom:1px solid rgba(30,58,100,.35);background:linear-gradient(90deg,#0b1a33,#0f2240,#0b1a33);font-size:12px;color:#8fa3bf;padding:10px 0;letter-spacing:.2px">
   <div id="ticker-track" style="display:inline-block;padding-left:100%;animation:taxMarquee var(--ticker-speed,270s) linear infinite;animation-play-state:var(--ticker-play,paused)">Loading updates…</div>
 </div>
 <style>@keyframes taxMarquee{from{transform:translateX(0)}to{transform:translateX(-100%)}}
+@keyframes taxFall{0%{transform:translateY(0) rotate(0deg);opacity:1}70%{opacity:0.85}100%{transform:translateY(105vh) rotate(540deg);opacity:0}}
 .flag-img{display:inline-block;width:20px;height:15px;object-fit:cover;border-radius:2px;margin-right:6px;vertical-align:-2px;box-shadow:0 0 0 1px rgba(255,255,255,.12)}
 #ticker-track{animation-duration:var(--ticker-speed,270s)!important;animation-play-state:var(--ticker-play,paused)!important;will-change:transform}
 .pulse-stat{display:flex;justify-content:space-between;gap:8px;margin-top:10px}
@@ -615,42 +868,43 @@ tr.flash td{animation:rowFlash 1s ease}@keyframes rowFlash{0%{background:rgba(52
   <div class="panel-view active" id="view-standings">
     <div class="hero-grid">
       <div class="hero-card">
-        <h3>Next match</h3>
+        <h3 id="hero-next-label">Next match</h3>
         <div class="big" id="next-match-title">Checking fixtures…</div>
         <div class="sub" id="next-match-sub">—</div>
         <div class="countdown" id="countdown"></div>
       </div>
       <div class="hero-card">
-        <h3>Race meter</h3>
+        <h3 id="hero-race-label">Race meter</h3>
         <div class="big" id="hero-sync">—</div>
         <div class="sub" id="hero-sync-sub">Gap to leader</div>
         <div class="pulse-stat">
-          <div class="ps"><b id="pulse-live">—</b><span>Still live</span></div>
+          <div class="ps" id="pulse-live-wrap"><b id="pulse-live">—</b><span>Still live</span></div>
           <div class="ps"><b id="pulse-ko">—</b><span>KO left</span></div>
           <div class="ps"><b id="pulse-gap">—</b><span>Pts gap 1–2</span></div>
         </div>
       </div>
       <div class="hero-card">
-        <h3>Leader</h3>
+        <h3 id="hero-leader-label">Leader</h3>
         <div class="big" id="hero-leader">—</div>
         <div class="sub" id="hero-leader-sub">Top of the table</div>
       </div>
     </div>
     <div class="sf-banner" id="sf-banner"></div>
     <div class="card">
-      <h2><span>Podium</span><span class="count" id="cutoff-label">Live</span></h2>
+      <h2><span>Podium</span><span class="count" id="cutoff-label">Final</span></h2>
       <div class="podium" id="podium"></div>
     </div>
     <div class="card">
-      <h2><span>Full Standings</span><span style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><button class="btn-secondary btn-sm" type="button" id="btn-share">Share</button><span class="count">Tiebreak: GF → least GC</span></span></h2>
+      <h2><span>Full Standings</span><span style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><button class="btn-secondary btn-sm" type="button" id="btn-share">Share</button><button class="btn-secondary btn-sm" type="button" onclick="window.print()" title="Print / Save as PDF">🖨️ Print</button><span class="count">Tiebreak: GF → least GC</span></span></h2>
       <table>
         <thead>
           <tr>
             <th>#</th><th>Participant</th>
             <th class="num">Pts</th><th class="num">GS</th><th class="num">KO</th>
             <th class="num">GF</th><th class="num">GC</th><th class="num">GD</th>
+            <th class="num spark-th">Trend</th>
             <th>Mystic</th>
-            <th>Still live</th>
+            <th id="th-live">Still live</th>
           </tr>
         </thead>
         <tbody id="standings-body"></tbody>
@@ -658,17 +912,20 @@ tr.flash td{animation:rowFlash 1s ease}@keyframes rowFlash{0%{background:rgba(52
     </div>
     <div class="card">
       <h2>📊 Expandable Points Breakdown</h2>
+      <div style="overflow-x:auto">
       <table>
         <thead>
           <tr>
             <th style="width:20px"></th><th>Participant</th>
             <th class="num">Pts</th><th class="num">GS</th><th class="num">R32</th>
-            <th class="num">R16</th><th class="num">QF</th><th class="num">SF+</th>
-            <th class="num">GF/GC</th>
+            <th class="num">R16</th><th class="num">QF</th>
+            <th class="num">SF</th><th class="num">3RD</th><th class="num">Final</th>
+            <th class="num">Mystic</th><th class="num">GF/GC</th>
           </tr>
         </thead>
         <tbody id="breakdown-body"></tbody>
       </table>
+      </div>
     </div>
   </div>
 
@@ -1063,7 +1320,7 @@ function resolveWinner(m) {
 function compute() {
   const part = {};
   for (const name of Object.keys(SEED.rosters)) {
-    part[name] = { pts: 0, gf: 0, gc: 0, gs: 0, ko: 0, r32: 0, r16: 0, qf: 0, sfplus: 0, teams: {} };
+    part[name] = { pts: 0, gf: 0, gc: 0, gs: 0, ko: 0, r32: 0, r16: 0, qf: 0, sfplus: 0, sf: 0, thirdPts: 0, finalPts: 0, teams: {} };
     for (const team of SEED.rosters[name]) {
       part[name].teams[team] = { pts: 0, gf: 0, gc: 0, gs: 0, ko: 0, log: [], alive: true };
     }
@@ -1104,7 +1361,12 @@ function compute() {
         if (stage === "R32") part[owner].r32 += pts;
         else if (stage === "R16") part[owner].r16 += pts;
         else if (stage === "QF") part[owner].qf += pts;
-        else part[owner].sfplus += pts;
+        else {
+          part[owner].sfplus += pts;
+          if (stage === "SF") part[owner].sf += pts;
+          else if (stage === "3RD") part[owner].thirdPts += pts;
+          else if (stage === "F") part[owner].finalPts += pts;
+        }
       }
     }
   }
@@ -1149,6 +1411,14 @@ function compute() {
   }
   // Mystic Bonus: +N if pick equals World Cup champion (Final winner)
   const champion = findChampion();
+  // Once a Final winner exists, all teams' tournament journeys are complete
+  if (champion) {
+    for (const name of Object.keys(part)) {
+      for (const team of Object.keys(part[name].teams)) {
+        part[name].teams[team].alive = false;
+      }
+    }
+  }
   for (const name of Object.keys(part)) {
     let pick = mystic.picks ? mystic.picks[name] : null;
     if (pick === "" || pick === undefined) pick = null;
@@ -1165,7 +1435,8 @@ function compute() {
   }
 
   const standings = Object.keys(part).map(name => ({
-    name, ...part[name], gd: part[name].gf - part[name].gc
+    name, ...part[name], gd: part[name].gf - part[name].gc,
+    sf: part[name].sf, thirdPts: part[name].thirdPts, finalPts: part[name].finalPts
   })).sort((a, b) => b.pts - a.pts || b.gf - a.gf || a.gc - b.gc || a.name.localeCompare(b.name));
   return { part, standings, matchAlloc, champion };
 }
@@ -1323,8 +1594,23 @@ function renderAll() {
     const leader = standings[0];
     const hl = document.getElementById("hero-leader");
     const hls = document.getElementById("hero-leader-sub");
-    if (hl && leader) { hl.innerHTML = avatar(leader.name) + " " + esc(leader.name); }
-    if (hls && leader) hls.textContent = leader.pts + " pts · GD " + (leader.gd>=0?"+":"") + leader.gd;
+    const heroLdrChamp = findChampion();
+    if (hl && leader) {
+      if (heroLdrChamp && standings.length >= 2 && standings[0].pts === standings[1].pts) {
+        hl.innerHTML = avatar(standings[0].name) + " " + esc(standings[0].name) + " & " + avatar(standings[1].name) + " " + esc(standings[1].name);
+      } else {
+        hl.innerHTML = avatar(leader.name) + " " + esc(leader.name);
+      }
+    }
+    if (hls && leader) {
+      if (heroLdrChamp && standings.length >= 2 && standings[0].pts === standings[1].pts) {
+        hls.textContent = "Joint Winners! " + leader.pts + " pts each";
+      } else {
+        hls.textContent = leader.pts + " pts · GD " + (leader.gd>=0?"+":"") + leader.gd;
+      }
+    }
+    const heroLdrLabel = document.getElementById("hero-leader-label");
+    if (heroLdrLabel) heroLdrLabel.textContent = heroLdrChamp ? "🏆 Winners" : "Leader";
     if (champion) maybeConfettiUI(champion);
   } catch(e){}
 }
@@ -1486,6 +1772,36 @@ function renderSfBanner(standings, part) {
     }
   }
   const el = document.getElementById("sf-banner");
+
+  // Detect tournament complete: Final has a winner
+  const champion = findChampion();
+  if (champion) {
+    // Find runner-up and 3rd place
+    const finalMatch = matches.find(m => m.stage === "F" && resolveWinner(m));
+    const runnerUp = finalMatch ? (finalMatch.teamA === champion ? finalMatch.teamB : finalMatch.teamA) : null;
+    const thirdMatch = matches.find(m => m.stage === "3RD" && resolveWinner(m));
+    const thirdPlace = thirdMatch ? resolveWinner(thirdMatch) : null;
+    el.innerHTML = `
+      <div style="text-align:center;padding:8px 0">
+        <div style="font-size:18px;font-weight:800;margin-bottom:8px">
+          🏆 <span style="color:var(--accent-2)">${flag(champion)}${esc(champion)}</span> won the FIFA World Cup 2026!
+        </div>
+        ${(()=>{
+          const {standings:ss}=compute();
+          if(ss.length>=2 && ss[0].pts===ss[1].pts){
+            return '<div style="font-size:14px;font-weight:700;color:var(--good);margin-bottom:10px">🎉 Sweepstake Joint Winners: '+esc(ss[0].name)+' &amp; '+esc(ss[1].name)+' ('+ss[0].pts+' pts each)</div>';
+          }
+          return "";
+        })()}
+        <div style="display:flex;justify-content:center;gap:28px;flex-wrap:wrap;font-size:13px;color:var(--muted)">
+          <span>🥇 <strong style="color:var(--good)">Champion:</strong> ${flag(champion)}${esc(champion)} <span style="color:var(--muted)">(${esc(OWNER[champion]||"")})</span></span>
+          <span>🥈 <strong style="color:#c0c4d0">Runners-up:</strong> ${runnerUp ? flag(runnerUp)+esc(runnerUp)+" <span style=\"color:var(--muted)\">("+esc(OWNER[runnerUp]||"")+")</span>" : "TBD"}</span>
+          ${thirdPlace ? `<span>🥉 <strong style="color:#cd7f32">3rd Place:</strong> ${flag(thirdPlace)}${esc(thirdPlace)} <span style="color:var(--muted)">(${esc(OWNER[thirdPlace]||"")})</span></span>` : ""}
+        </div>
+      </div>`;
+    return;
+  }
+
   if (!alive.length) {
     el.innerHTML = "<strong>No teams marked live</strong> — tournament may be complete, or only group data is loaded.";
     return;
@@ -1500,17 +1816,73 @@ function renderPodium(standings) {
   const medals = ["🥇","🥈","🥉"], classes = ["p1","p2","p3"];
   const top = standings.slice(0, 3);
   const order = top.length === 3 ? [top[1], top[0], top[2]] : top;
+  const podChamp = findChampion();
+  const isJointWin = podChamp && top.length >= 2 && top[0].pts === top[1].pts;
   document.getElementById("podium").innerHTML = order.map((s) => {
     const i = standings.findIndex(x => x.name === s.name);
-    return `<div class="podium-card ${classes[i]||""}" data-person="${esc(s.name)}" style="cursor:pointer">
-      <div class="place">${medals[i]||""}</div>
+    // Joint winners both get gold styling
+    const cls = (isJointWin && i <= 1) ? "p1" : (classes[i] || "");
+    const medal = (isJointWin && i <= 1) ? "🏆" : (medals[i] || "");
+    const jointLabel = (isJointWin && i <= 1) ? '<div style="font-size:10px;color:var(--good);font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-top:4px">Joint Winner</div>' : "";
+    return `<div class="podium-card ${cls}" data-person="${esc(s.name)}" style="cursor:pointer">
+      <div class="place">${medal}</div>
       <div style="margin:8px auto">${avatar(s.name)}</div>
       <div class="pname">${esc(s.name)}</div>
       <div class="ppts">${s.pts}</div>
       <div class="psub">GS ${s.gs} · KO ${s.ko} · GF ${s.gf}/${s.gc}</div>
+      ${jointLabel}
     </div>`;
   }).join("");
+  // Update label
+  const cutoffLabel = document.getElementById("cutoff-label");
+  if (cutoffLabel) cutoffLabel.textContent = podChamp ? (isJointWin ? "Joint Winners" : "Final") : "Live";
   document.querySelectorAll("#podium .podium-card").forEach(el => el.onclick = () => openDossierUI(el.dataset.person));
+  // Victory entrance animation via IntersectionObserver
+  if (typeof IntersectionObserver !== "undefined" && podChamp) {
+    const cards = document.querySelectorAll("#podium .podium-card");
+    cards.forEach((c, ci) => { c.classList.add("victory-hidden"); c.style.setProperty("--v-delay", ci * 180 + "ms"); });
+    const obs = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.remove("victory-hidden");
+          entry.target.classList.add("victory-reveal");
+          obs.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.3 });
+    cards.forEach(c => obs.observe(c));
+  }
+}
+
+
+// ── Sparkline: cumulative pts per match for a participant ──
+function buildSparkline(name, part) {
+  const logs = [];
+  for (const team of (SEED.rosters[name] || [])) {
+    const t = part[name] && part[name].teams[team];
+    if (!t) continue;
+    for (const e of t.log) {
+      logs.push({ date: e.date, pts: e.pts, stage: e.stage });
+    }
+  }
+  // Sort by match date chronologically
+  const dateOrder = {};
+  for (const m of matches) {
+    if (!(m.date in dateOrder)) dateOrder[m.date] = Object.keys(dateOrder).length;
+  }
+  logs.sort((a,b) => (dateOrder[a.date]||0) - (dateOrder[b.date]||0));
+  if (!logs.length) return "";
+  // Build cumulative series
+  const pts = [0];
+  let cum = 0;
+  for (const l of logs) { cum += l.pts; pts.push(cum); }
+  const maxPts = Math.max(...pts, 1);
+  const w = 80, h = 24, pad = 1;
+  const stepX = (w - pad * 2) / Math.max(pts.length - 1, 1);
+  const points = pts.map((v, i) => `${pad + i * stepX},${h - pad - (v / maxPts) * (h - pad * 2)}`).join(" ");
+  // area fill
+  const areaPoints = points + ` ${pad + (pts.length - 1) * stepX},${h - pad} ${pad},${h - pad}`;
+  return `<svg class="sparkline" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}"><polygon points="${areaPoints}" fill="url(#sparkGrad)" opacity=".45"/><polyline points="${points}" fill="none" stroke="#60a5fa" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/><circle cx="${pad + (pts.length - 1) * stepX}" cy="${h - pad - (pts[pts.length-1] / maxPts) * (h - pad * 2)}" r="2" fill="#7dd3fc"/></svg>`;
 }
 
 function renderStandings(standings, part, changed = {}) {
@@ -1527,9 +1899,16 @@ function renderStandings(standings, part, changed = {}) {
     } else {
       mystHtml = `<span style="color:var(--muted)">—</span>`;
     }
-    const liveHtml = live.length
-      ? live.map(t => `${flag(t)}<span style="color:var(--good);font-weight:700">${esc(t)}</span>`).join(" ")
-      : `<span style="color:var(--muted)">—</span>`;
+    const standChamp = findChampion();
+    let liveHtml;
+    if (standChamp) {
+      // Tournament over — show nothing (header hidden)
+      liveHtml = '';
+    } else {
+      liveHtml = live.length
+        ? live.map(t => `${flag(t)}<span style="color:var(--good);font-weight:700">${esc(t)}</span>`).join(" ")
+        : `<span style="color:var(--muted)">—</span>`;
+    }
     const flash = changed[s.name] ? "flash" : "";
     return `<tr class="clickable ${flash}" data-person="${esc(s.name)}" style="cursor:pointer">
       <td><span class="rank ${rankCls}">${i+1}</span></td>
@@ -1538,10 +1917,20 @@ function renderStandings(standings, part, changed = {}) {
       <td class="num">${s.gs}</td><td class="num">${s.ko}</td>
       <td class="num">${s.gf}</td><td class="num">${s.gc}</td>
       <td class="num ${gdClass(s.gd)}">${s.gd >= 0 ? "+" : ""}${s.gd}</td>
+      <td class="num spark-td">${buildSparkline(s.name, part)}</td>
       <td style="font-size:11px;white-space:nowrap">${mystHtml}</td>
       <td style="font-size:12px;white-space:nowrap">${liveHtml}</td>
     </tr>`;
   }).join("");
+  // Hide "Still live" column when tournament is done
+  const thLive = document.getElementById("th-live");
+  const tourneyDone = !!findChampion();
+  if (thLive) thLive.style.display = tourneyDone ? "none" : "";
+  document.querySelectorAll("#standings-body tr").forEach(tr => {
+    const cells = tr.querySelectorAll("td");
+    // Sparkline added a column; Still-live is now index 10
+    if (cells.length >= 11) cells[10].style.display = tourneyDone ? "none" : "";
+  });
   document.querySelectorAll("#standings-body tr[data-person]").forEach(tr => {
     tr.onclick = () => openDossierUI(tr.dataset.person);
   });
@@ -1580,8 +1969,10 @@ function renderBreakdown(standings, part) {
           </div>`);
         }
       }
-      detail = `<tr><td colspan="9" class="detail-box">${lines.join("") || "<em>No matches</em>"}</td></tr>`;
+      detail = `<tr><td colspan="13" class="detail-box">${lines.join("") || "<em>No matches</em>"}</td></tr>`;
     }
+    const brkMystic = s.mysticHit ? '+' + s.mysticPts : (s.mysticPick ? '—' : '—');
+    const brkMystCls = s.mysticHit ? 'ppos' : '';
     return `<tr class="breakdown-row" data-name="${esc(s.name)}">
       <td><span class="caret ${isOpen ? "open" : ""}">▶</span></td>
       <td><strong>${esc(s.name)}</strong></td>
@@ -1590,7 +1981,10 @@ function renderBreakdown(standings, part) {
       <td class="num">${s.r32 || "·"}</td>
       <td class="num">${s.r16 || "·"}</td>
       <td class="num">${s.qf || "·"}</td>
-      <td class="num">${s.sfplus || "·"}</td>
+      <td class="num">${s.sf || "·"}</td>
+      <td class="num">${s.thirdPts || "·"}</td>
+      <td class="num">${s.finalPts || "·"}</td>
+      <td class="num ${brkMystCls}">${brkMystic}</td>
       <td class="num">${s.gf}/${s.gc}</td>
     </tr>${detail}`;
   }).join("");
@@ -1605,13 +1999,35 @@ function renderBreakdown(standings, part) {
 
 function renderRosters(standings, part) {
   document.getElementById("roster-grid").innerHTML = standings.map(s => {
+    const champ = findChampion();
     const teams = SEED.rosters[s.name].map(team => {
       const t = part[s.name].teams[team];
       const path = t.log.filter(e => e.stage !== "GS" && e.pts > 0).map(e => e.stage).join("+");
+      const ribbonHtml = (champ && team === champ) ? ' <span class="champion-ribbon">🏆</span>' : "";
+      const journeyStages = ["GS","R32","R16","QF","SF","F"];
+      const journeyThird = t.log.some(e => e.stage === "3RD");
+      const stagesPlayed = new Set(t.log.map(e => e.stage));
+      const lastKOWin = [...t.log].reverse().find(e => e.stage !== "GS" && e.note.startsWith("WIN"));
+      const lastKOLoss = [...t.log].reverse().find(e => e.stage !== "GS" && e.note.startsWith("LOSS"));
+      const journeyHtml = journeyStages.map(st => {
+        const played = stagesPlayed.has(st);
+        const wasWin = t.log.some(e => e.stage === st && e.note.startsWith("WIN"));
+        const wasLoss = t.log.some(e => e.stage === st && e.note.startsWith("LOSS"));
+        let cls = "jn-dot";
+        if (st === "GS") cls += played ? " jn-gs" : " jn-future";
+        else if (wasWin) cls += " jn-win";
+        else if (wasLoss) cls += " jn-loss";
+        else if (!played) cls += " jn-future";
+        else cls += " jn-draw";
+        const label = st === "F" && journeyThird ? "3RD" : st;
+        return '<span class="' + cls + '" title="' + label + '">' + label + '</span>';
+      }).join('<span class="jn-line"></span>');
+      const thirdDot = journeyThird ? '<span class="jn-line"></span><span class="jn-dot jn-win" title="3RD">3RD</span>' : '';
       return `<div class="team-line ${t.alive ? "alive" : "out"}">
-        <div>
-          <div class="tname">${t.alive ? "🟢" : "⚫"} ${esc(team)}</div>
+        <div style="flex:1;min-width:0">
+          <div class="tname">${t.alive ? "🟢" : "⚫"} ${flag(team)}${esc(team)}${ribbonHtml}</div>
           <div class="tstats">GS ${t.gs} · KO ${t.ko}${path ? " · " + path : ""} · ${t.gf}/${t.gc}</div>
+          <div class="team-journey">${journeyHtml}${thirdDot}</div>
         </div>
         <div class="tpts">${t.pts}</div>
       </div>`;
@@ -1626,7 +2042,14 @@ function renderMatches(matchAlloc) {
   document.getElementById("matches-count").textContent = matchAlloc.length;
   let items = matchAlloc.slice();
   if (matchFilter !== "ALL") items = items.filter(x => x.m.stage === matchFilter);
-  items = items.slice().reverse();
+  // Sort: most important stage first, then newest date first within same stage
+  const _mStagePri = {F:0,"3RD":1,SF:2,QF:3,R16:4,R32:5,GS:6};
+  items.sort((a,b) => {
+    const pa = _mStagePri[a.m.stage] ?? 50, pb = _mStagePri[b.m.stage] ?? 50;
+    if (pa !== pb) return pa - pb;
+    // Within same stage, reverse chronological (later date first)
+    return (b.m.date || "").localeCompare(a.m.date || "");
+  });
   if (!items.length) { feed.innerHTML = '<div class="empty">No matches for this filter</div>'; return; }
   feed.innerHTML = items.map(({ m, ptsA, ptsB }) => {
     const winner = resolveWinner(m);
@@ -1649,7 +2072,7 @@ function renderMatches(matchAlloc) {
           <span>${flag(m.teamB)}${esc(m.teamB)}<span class="owner">${esc(OWNER[m.teamB] || "?")}</span></span>
           <span><strong>${m.scoreB}</strong> <span class="pts-earned ${ptsB ? "" : "zero"}">${ptsB ? "+" + ptsB : "0"}</span></span>
         </div>
-        ${m.note ? `<div class="note">${esc(m.note)}</div>` : ""}
+        ${m.note && !(m.note === "LIVE" && resolveWinner(m)) ? `<div class="note">${esc(m.note)}</div>` : ""}
       </div>
       <div>${delBtn}</div>
     </div>`;
@@ -1849,7 +2272,28 @@ function renderNextMatchHero() {
   const cd = document.getElementById("countdown");
   if (!title) return;
 
-  // Prefer a currently LIVE feed match if any (Final/3rd/SF first)
+  // Stop any running countdown first
+  if (countdownTimer) { clearInterval(countdownTimer); countdownTimer = null; }
+
+  // ── Tournament complete? Show champion card and return ──
+  const heroChamp = findChampion();
+  if (heroChamp) {
+    const finalMatch = matches.find(m => m.stage === "F" && resolveWinner(m));
+    const runnerUp = finalMatch ? (finalMatch.teamA === heroChamp ? finalMatch.teamB : finalMatch.teamA) : null;
+    const nextLabel = document.getElementById("hero-next-label");
+    if (nextLabel) nextLabel.textContent = "🏆 World Cup 2026";
+    title.innerHTML = flag(heroChamp) + '<strong>' + esc(heroChamp) + '</strong> <span style="color:var(--good);font-size:16px">World Champions!</span>';
+    if (sub) {
+      const scoreLine = finalMatch
+        ? esc(finalMatch.teamA) + " " + finalMatch.scoreA + "–" + finalMatch.scoreB + " " + esc(finalMatch.teamB)
+        : "";
+      sub.innerHTML = 'Tournament complete' + (scoreLine ? ' · Final: <strong>' + scoreLine + '</strong>' : '');
+    }
+    if (cd) cd.innerHTML = "";
+    return;
+  }
+
+  // ── Live feed match in progress? ──
   const liveNow = (liveFeedCache || []).find(g => g.live && (g.stage === "F" || g.stage === "3RD" || g.stage === "SF"))
     || (liveFeedCache || []).find(g => g.live)
     || null;
@@ -1865,9 +2309,8 @@ function renderNextMatchHero() {
     };
     liveInfo = liveNow;
   } else if (!fixtures.length) {
-    // fallback: show last known unfinished final/third from fixtures list empty
     title.innerHTML = 'No upcoming fixtures';
-    if (sub) sub.textContent = "All tracked knockout games are complete (or sync for updates).";
+    if (sub) sub.textContent = "All knockout matches are complete.";
     if (cd) cd.innerHTML = "";
     return;
   } else {
@@ -1896,14 +2339,12 @@ function renderNextMatchHero() {
     }
   }
 
-  // Score line under subtitle via countdown container when live
+  // Score line / countdown in the cd container
   const target = n.kickoff ? new Date(n.kickoff) : null;
   function tick() {
     if (!cd) return;
-    // refresh liveInfo each tick lightly from cache
     const live = findLiveFeedMatch(n.a, n.b, n.stage) || (liveInfo && liveInfo.live ? liveInfo : null);
     if (live && live.live) {
-      // orient scores to n.a / n.b
       let sa = live.scoreA, sb = live.scoreB;
       if (live.teamA === n.b && live.teamB === n.a) { sa = live.scoreB; sb = live.scoreA; }
       const clock = live.timeElapsed && String(live.timeElapsed).toLowerCase() !== "live"
@@ -1917,17 +2358,12 @@ function renderNextMatchHero() {
       return;
     }
     if (!target || Number.isNaN(+target)) {
-      cd.innerHTML = `<div class="cd-unit"><b>—</b><span>TBD</span></div>`;
+      cd.innerHTML = "";
       return;
     }
     let ms = target.getTime() - Date.now();
     if (ms <= 0) {
-      if (ms > -3 * 3600 * 1000) {
-        cd.innerHTML = `<div class="cd-unit"><b>Live</b><span>window</span></div>
-          <div class="help" style="margin-top:8px">Waiting for live score feed…</div>`;
-      } else {
-        cd.innerHTML = `<div class="cd-unit"><b>FT</b><span>soon</span></div>`;
-      }
+      cd.innerHTML = "";
       return;
     }
     const d = Math.floor(ms / 86400000); ms %= 86400000;
@@ -1938,7 +2374,6 @@ function renderNextMatchHero() {
       .map(([lab, val]) => `<div class="cd-unit"><b>${val}</b><span>${lab}</span></div>`).join("");
   }
   tick();
-  if (countdownTimer) clearInterval(countdownTimer);
   countdownTimer = setInterval(tick, 1000);
 }
 function findMatchUI(stage,a,b){
@@ -1950,8 +2385,10 @@ function bracketSide(team, score, winner){
   const ownerHtml = ownerName
     ? `<span class="owner-sep">·</span><span class="owner-label">${esc(ownerName)}</span>`
     : "";
+  const champ = findChampion();
+  const ribbonHtml = (champ && team === champ) ? '<span class="champion-ribbon">🏆 Champion</span>' : "";
   return `<div class="bracket-side ${win?"win":""}">
-    <span class="bracket-team">${flag(team)}<strong class="team-name">${esc(team)}</strong>${ownerHtml}</span>
+    <span class="bracket-team">${flag(team)}<strong class="team-name">${esc(team)}</strong>${ribbonHtml}${ownerHtml}</span>
     <strong class="bracket-score">${score??"—"}</strong>
   </div>`;
 }
@@ -1990,8 +2427,8 @@ function pickMatchRecord(stage, a, b) {
       scoreA: sa,
       scoreB: sb,
       winner: winner || (m && m.winner) || null,
-      note: feed.live ? (feed.timeElapsed && String(feed.timeElapsed).toLowerCase() !== "live" ? ("LIVE " + feed.timeElapsed) : "LIVE") : (m && m.note) || "",
-      live: !!feed.live,
+      note: (feed.live && !winner && !(m && m.winner)) ? (feed.timeElapsed && String(feed.timeElapsed).toLowerCase() !== "live" ? ("LIVE " + feed.timeElapsed) : "LIVE") : (m && m.note) || "",
+      live: !!(feed.live && !winner && !(m && m.winner)),
       finished
     };
   }
@@ -2035,15 +2472,17 @@ function renderBracketUI(){
 
   const card = (label, m) => {
     const w = resolveWinner(m);
-    const liveTag = m.live ? ' · <span style="color:#fca5a5">LIVE</span>' : '';
-    const note = m.note ? (" · " + esc(m.note)) : "";
+    const liveTag = (m.live && !w) ? ' · <span style="color:#fca5a5">LIVE</span>' : '';
+    const rawNote = (m.note && m.note.startsWith("LIVE") && w) ? "" : (m.note || "");
+    const note = rawNote ? (" · " + esc(rawNote)) : "";
     return `<div class="bracket-match"><div class="bm-head">${esc(label)}${liveTag}${note}</div>${bracketSide(m.teamA,m.scoreA,w)}${bracketSide(m.teamB,m.scoreB,w)}</div>`;
   };
 
   let centerStatus = "Awaiting finalists";
   if (fin && resolveWinner(fin)) {
     const champ = resolveWinner(fin);
-    centerStatus = "Champion: " + flag(champ) + esc(champ);
+    const rUp = fin.teamA === champ ? fin.teamB : fin.teamA;
+    centerStatus = "Champion: " + flag(champ) + esc(champ) + " &middot; Runners-up: " + flag(rUp) + esc(rUp);
   } else if (w1 && w2) {
     centerStatus = "Finalists locked";
   } else if (w1 || w2) {
@@ -2058,15 +2497,15 @@ function renderBracketUI(){
       <div style="font-size:12px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin:6px 0">Final</div>
       <div style="font-weight:800">${centerLeft==="TBD"?"TBD":flag(centerLeft)}${esc(centerLeft)} <span style="color:var(--muted)">vs</span> ${centerRight==="TBD"?"TBD":flag(centerRight)}${esc(centerRight)}</div>
       <div style="margin-top:8px;color:var(--muted);font-size:12px">${centerStatus}</div>
-      ${fin && (fin.live || (fin.scoreA !== "—" && fin.scoreB !== "—" && (fin.scoreA !== 0 || fin.scoreB !== 0 || fin.live))) ? `<div class="live-score-line" style="font-size:18px;margin-top:10px">${esc(fin.teamA)} <span class="sep">${fin.scoreA}</span>-<span class="sep">${fin.scoreB}</span> ${esc(fin.teamB)}</div>` : ""}
+      ${fin && resolveWinner(fin) ? `<div style="font-size:16px;margin-top:10px;color:var(--text)">${esc(fin.teamA)} <strong>${fin.scoreA}</strong> – <strong>${fin.scoreB}</strong> ${esc(fin.teamB)}</div>` : (fin && fin.live ? `<div class="live-score-line" style="font-size:18px;margin-top:10px">${esc(fin.teamA)} <span class="sep">${fin.scoreA}</span>-<span class="sep">${fin.scoreB}</span> ${esc(fin.teamB)}</div>` : "")}
     </div>
     <div>${card("Final", fin)}${card("3rd place", third)}</div>`;
 
   const st = document.getElementById("bracket-status");
   if (st) {
     if (fin && resolveWinner(fin)) st.textContent = "Complete";
-    else if (third && third.live) st.textContent = "3rd place LIVE";
-    else if (fin && fin.live) st.textContent = "Final LIVE";
+    else if (third && third.live && !resolveWinner(third)) st.textContent = "3rd place LIVE";
+    else if (fin && fin.live && !resolveWinner(fin)) st.textContent = "Final LIVE";
     else if (w1 && w2) st.textContent = "Final set";
     else st.textContent = "In progress";
   }
@@ -2137,7 +2576,10 @@ async function saveTickerSpeedLive(){
 }
 function renderTickerUI(matchAlloc, standings){
   const track=document.getElementById("ticker-track"); if(!track) return;
-  const recent=matchAlloc.filter(x=>x.m.stage!=="GS").slice(-10).reverse();
+  // Stage priority: F first, then 3RD, SF, QF, R16, R32
+  const _stagePri = {F:0,"3RD":1,SF:2,QF:3,R16:4,R32:5,GS:99};
+  const recent=matchAlloc.filter(x=>x.m.stage!=="GS").slice(-10)
+    .sort((a,b) => (_stagePri[a.m.stage]??50) - (_stagePri[b.m.stage]??50));
   const bits=[];
   for (const {m,ptsA,ptsB} of recent){
     const w=resolveWinner(m);
@@ -2145,11 +2587,23 @@ function renderTickerUI(matchAlloc, standings){
     const owner = w ? (OWNER[w]||"") : "";
     bits.push(`<b>${esc(m.stage)}</b> ${flag(m.teamA)}<b>${esc(m.teamA)}</b> ${m.scoreA}–${m.scoreB} ${flag(m.teamB)}<b>${esc(m.teamB)}</b>${w?` · <span class="up">${esc(owner)} +${gain}</span>`:""}`);
   }
-  if (standings[0]) bits.push(`Leader: <b>${esc(standings[0].name)}</b> ${standings[0].pts} pts`);
-  bits.push(`Still live: <b>${standings.reduce((n,s)=>n+Object.values(s.teams||{}).filter(t=>t.alive).length,0)}</b> teams`);
-  const line = bits.join(' &nbsp;•&nbsp; ') || "Simply US Tax Sweepstake";
+  const tickerChamp = findChampion();
+  if (tickerChamp) {
+    const tickerFinal = matches.find(m => m.stage === "F" && resolveWinner(m));
+    const tickerScore = tickerFinal ? (esc(tickerFinal.teamA) + " " + tickerFinal.scoreA + "–" + tickerFinal.scoreB + " " + esc(tickerFinal.teamB)) : "";
+    bits.push(`🏆 <b>${esc(tickerChamp)}</b> won the World Cup 2026` + (tickerScore ? ` (${tickerScore})` : ""));
+    if (standings.length >= 2 && standings[0].pts === standings[1].pts) {
+      bits.push(`🎉 Joint Sweepstake Winners: <b>${esc(standings[0].name)}</b> &amp; <b>${esc(standings[1].name)}</b> — ${standings[0].pts} pts`);
+    } else if (standings[0]) {
+      bits.push(`Sweepstake Winner: <b>${esc(standings[0].name)}</b> ${standings[0].pts} pts`);
+    }
+  } else {
+    if (standings[0]) bits.push(`Leader: <b>${esc(standings[0].name)}</b> ${standings[0].pts} pts`);
+    bits.push(`Still live: <b>${standings.reduce((n,s)=>n+Object.values(s.teams||{}).filter(t=>t.alive).length,0)}</b> teams`);
+  }
+  const line = bits.join(' &nbsp;&nbsp;&nbsp;·&nbsp;&nbsp;&nbsp; ') || "Simply US Tax Sweepstake";
   // duplicate for continuous scroll
-  track.innerHTML = line + ' &nbsp;•&nbsp; ' + line + ' &nbsp;•&nbsp; ' + line;
+  track.innerHTML = line + ' &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ' + line + ' &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ' + line;
   applyTickerSpeed();
 }
 function updateRaceMeter(standings, part){
@@ -2159,19 +2613,42 @@ function updateRaceMeter(standings, part){
   const leader=standings[0];
   const second=standings[1];
   const gap = second ? (leader.pts - second.pts) : 0;
+  const raceChamp = findChampion();
+  const koLeft = raceChamp ? 0 : matches.filter(m => ["SF","F","3RD"].includes(m.stage) && !resolveWinner(m)).length;
+
+  const pl=document.getElementById("pulse-live");
+  const pk=document.getElementById("pulse-ko");
+  const pg=document.getElementById("pulse-gap");
+
+  if (raceChamp) {
+    // ── Tournament over ──
+    if (hs) hs.textContent = "🏆 Complete";
+    // Joint winners or single winner
+    if (second && gap === 0) {
+      if (hss) hss.innerHTML = '<strong style="color:var(--good)">' + esc(leader.name) + '</strong> &amp; <strong style="color:var(--good)">' + esc(second.name) + '</strong> — Joint Winners! (' + leader.pts + ' pts each)';
+    } else if (second) {
+      if (hss) hss.textContent = leader.name + " wins by " + gap + " pts over " + second.name;
+    } else {
+      if (hss) hss.textContent = leader.name + " wins the sweepstake!";
+    }
+    if (pl) { pl.textContent = "✓"; pl.parentElement.querySelector("span:last-child").textContent = "Done"; }
+    if (pk) { pk.textContent = "0"; }
+    if (pg) { pg.textContent = String(gap); }
+    return;
+  }
+
+  // ── During tournament ──
   let liveTeams=0;
   for (const s of standings) for (const t of Object.values(part[s.name].teams)) if (t.alive) liveTeams++;
-  const koLeft = matches.filter(m => ["SF","F","3RD"].includes(m.stage) && !resolveWinner(m)).length;
-  // nicer headline: chase narrative
   if (hs) {
     if (second && gap <= 5) hs.textContent = "Tight race";
     else if (second && gap <= 12) hs.textContent = leader.name + " leads";
     else hs.textContent = leader.name + " clear";
   }
   if (hss) hss.textContent = second ? (`${leader.name} by ${gap} pts over ${second.name}`) : "Only one player on the board";
-  const pl=document.getElementById("pulse-live"); if (pl) pl.textContent = String(liveTeams);
-  const pk=document.getElementById("pulse-ko"); if (pk) pk.textContent = String(Math.max(koLeft, 0));
-  const pg=document.getElementById("pulse-gap"); if (pg) pg.textContent = second ? String(gap) : "—";
+  if (pl) pl.textContent = String(liveTeams);
+  if (pk) pk.textContent = String(Math.max(koLeft, 0));
+  if (pg) pg.textContent = second ? String(gap) : "—";
 }
 function renderCompareUI(){
   const a=document.getElementById("cmp-a");
@@ -2253,21 +2730,33 @@ function openDossierUI(name){
 }
 function shareStandingsUI(){
   const {standings}=compute();
-  const lines=["🏆 Simply US Tax — WC 2026 Sweepstake","Standings:",
+  const shareChamp = findChampion();
+  const shareHeader = shareChamp ? "🏆 Simply US Tax — WC 2026 Sweepstake — FINAL RESULTS" : "🏆 Simply US Tax — WC 2026 Sweepstake";
+  const shareJoint = (shareChamp && standings.length >= 2 && standings[0].pts === standings[1].pts)
+    ? ["","🎉 Joint Winners: " + standings[0].name + " & " + standings[1].name + " (" + standings[0].pts + " pts each)",""]
+    : [""];
+  const lines=[shareHeader,"Standings:",
     ...standings.map((s,i)=>`${i+1}. ${s.name} — ${s.pts} pts (GS ${s.gs}/KO ${s.ko}, GD ${s.gd>=0?"+":""}${s.gd})`),
-    "","Updated: "+new Date().toLocaleString()];
+    ...shareJoint,"Updated: "+new Date().toLocaleString()];
   document.getElementById("share-text").textContent=lines.join("\n");
   document.getElementById("share-modal").classList.add("show");
 }
 function maybeConfettiUI(champion){
   if(!champion || confettiDoneFor===champion) return;
   if(!matches.some(m=>m.stage==="F"&&resolveWinner(m))) return;
+  // Only fire once per session (sessionStorage prevents on subsequent navigations)
+  const confettiKey = "confetti_fired_" + champion;
+  if(sessionStorage.getItem(confettiKey)) { confettiDoneFor=champion; return; }
   confettiDoneFor=champion;
-  const colors=["#3b82f6","#22d3ee","#34d399","#fbbf24","#f472b6","#a78bfa"];
-  for(let i=0;i<40;i++){
+  sessionStorage.setItem(confettiKey, "1");
+  const colors=["#3b82f6","#22d3ee","#34d399","#fbbf24","#f472b6","#a78bfa","#fff"];
+  for(let i=0;i<55;i++){
     const p=document.createElement("div");
-    p.style.cssText=`position:fixed;top:-10px;left:${Math.random()*100}vw;width:8px;height:12px;z-index:200;pointer-events:none;background:${colors[i%colors.length]};animation:taxFall ${2.5+Math.random()*2}s linear forwards;animation-delay:${Math.random()*.8}s`;
-    document.body.appendChild(p); setTimeout(()=>p.remove(),5500);
+    const size = 5 + Math.random()*7;
+    const shapes = ["50%","2px","0"];
+    const br = shapes[i%3];
+    p.style.cssText=`position:fixed;top:-12px;left:${Math.random()*100}vw;width:${size}px;height:${size*1.4}px;z-index:200;pointer-events:none;opacity:0.85;border-radius:${br};background:${colors[i%colors.length]};animation:taxFall ${3+Math.random()*2.5}s ease-out forwards;animation-delay:${Math.random()*1.2}s`;
+    document.body.appendChild(p); setTimeout(()=>p.remove(),7000);
   }
 }
 
